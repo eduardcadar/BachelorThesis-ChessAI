@@ -10,7 +10,9 @@ namespace ChessGameLibrary
         public Board Board;
         public PieceColor PlayerToMove;
         public SquareCoords EnPassantSquare;
-        public List<MoveInfo> Moves = new List<MoveInfo>();
+        public GameState State;
+        public List<MoveInfo> MovesHistory = new List<MoveInfo>();
+        public List<SimpleMove> LegalMoves = new List<SimpleMove>();
 
         public bool SetPositionFromFEN(string fen)
         {
@@ -53,15 +55,37 @@ namespace ChessGameLibrary
                 case "b": PlayerToMove = PieceColor.BLACK; break;
                 default: return false;
             }
+
+            if (fields[3] != "-")
+            {
+                // set enpassant square, fields[3] is the square, format: "a2" (file letter then rank number)
+            }
+            else
+                EnPassantSquare = null;
+
+            State = GameState.INPROGRESS;
             UpdateThreatMap();
-            EnPassantSquare = null;
+            RefreshLegalMoves();
+            CheckGameState();
             return true;
+        }
+
+        public void RefreshLegalMoves()
+        {
+            LegalMoves.Clear();
+            foreach (Square from in Board.Squares)
+            {
+                if (from.Piece == null || from.Piece.Color != PlayerToMove)
+                    continue;
+                LegalMoves.AddRange(MoveSquares(from.SquareCoords)
+                    .Select(to => new SimpleMove(from.SquareCoords, to)));
+            }
         }
 
         public void UndoMove()
         {
-            MoveInfo moveToUndo = Moves.Last();
-            Moves.Remove(moveToUndo);
+            MoveInfo moveToUndo = MovesHistory.Last();
+            MovesHistory.Remove(moveToUndo);
             SquareCoords from = moveToUndo.From, to = moveToUndo.To;
             Board.Squares[from.File, from.Rank].Piece = moveToUndo.Piece;
             Board.Squares[to.File, to.Rank].Piece = null;
@@ -72,12 +96,18 @@ namespace ChessGameLibrary
             UpdateThreatMap();
         }
 
-        public MoveInfo Move(SquareCoords from, SquareCoords to, PieceType promotedTo = PieceType.NONE)
+        public MoveInfo Move(SquareCoords from, SquareCoords to, PieceType promotedTo = PieceType.NONE, bool justCheck = false)
         {
             Square fromSq = Board.Squares[from.File, from.Rank];
             Piece piece = fromSq.Piece;
             Square toSq = Board.Squares[to.File, to.Rank];
             MoveInfo moveInfo = new MoveInfo(MoveType.NORMAL, piece, from, to);
+            if (piece == null)
+            {
+                Console.WriteLine("NO PIECE ON FROM SQUARE");
+                return moveInfo;
+                //error
+            }
             if (piece.Color != PlayerToMove)
             {
                 Console.WriteLine("WRONG MOVE, THE OTHER PLAYER HAS TO MOVE");
@@ -105,9 +135,37 @@ namespace ChessGameLibrary
             toSq.Piece = piece;
             fromSq.Piece = null;
             PlayerToMove = PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
+            MovesHistory.Add(moveInfo);
             UpdateThreatMap();
-            Moves.Add(moveInfo);
+            if (!justCheck)
+                RefreshLegalMoves();
+            CheckGameState();
             return moveInfo;
+        }
+
+        private void CheckGameState()
+        {
+            PieceColor otherPlayer = PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
+            if (LegalMoves.Count == 0)
+            {
+                Square sq = Board.Squares
+                    .Cast<Square>()
+                    .Single(s => s.Piece != null && s.Piece.Type == PieceType.KING && s.Piece.Color == PlayerToMove);
+                if (sq.IsAttackedBy(otherPlayer))
+                    State = GameState.CHECKMATE;
+                else
+                    State = GameState.STALEMATE;
+            }
+            else
+                State = GameState.INPROGRESS;
+        }
+
+        private bool CheckMove(SquareCoords from, SquareCoords to)
+        {
+            Move(from, to, justCheck: true);
+            bool boardIsValid = BoardIsValid();
+            UndoMove();
+            return boardIsValid;
         }
 
         private bool BoardIsValid()
@@ -120,14 +178,6 @@ namespace ChessGameLibrary
             if (sq.IsAttackedBy(PlayerToMove))
                 return false;
             return true;
-        }
-
-        private bool CheckMove(Piece piece, SquareCoords from, SquareCoords to)
-        {
-            Move(from, to, PieceType.NONE);
-            bool boardIsValid = BoardIsValid();
-            UndoMove();
-            return boardIsValid;
         }
 
         public List<SquareCoords> MoveSquares(SquareCoords from)
@@ -146,7 +196,7 @@ namespace ChessGameLibrary
                 _ => throw new NotImplementedException()
             };
             squareCoords = squareCoords
-                .Where(to => CheckMove(piece, from, to))
+                .Where(to => CheckMove(from, to))
                 .ToList();
             return squareCoords;
         }

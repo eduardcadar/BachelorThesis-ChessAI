@@ -43,6 +43,8 @@ public class BoardTile : MonoBehaviour
                 Piece pieceToMove = chessboard.SelectedSquare.transform.parent.GetComponentInChildren<Piece>();
                 pieceToMove.transform.parent = clickedSquare.transform;
                 pieceToMove.transform.position = clickedSquare.transform.position;
+                if (chessboard.Game.State != GameState.INPROGRESS)
+                    Debug.Log(chessboard.Game.State);
             }
             //
             Destroy(chessboard.SelectedSquare);

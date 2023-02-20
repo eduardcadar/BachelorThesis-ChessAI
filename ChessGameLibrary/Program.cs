@@ -8,15 +8,17 @@ namespace ChessGameLibrary
         {
             Game game = new Game();
             game.SetPositionFromFEN(Utils.STARTING_FEN);
-            game.Move(new SquareCoords(6, 1), new SquareCoords(6, 2), Enums.PieceType.NONE);
-            game.Move(new SquareCoords(3, 6), new SquareCoords(3, 4), Enums.PieceType.NONE);
-            game.Move(new SquareCoords(2, 3), new SquareCoords(3, 4), Enums.PieceType.NONE);
-            game.Move(new SquareCoords(2, 6), new SquareCoords(2, 4), Enums.PieceType.NONE);
-            game.Move(new SquareCoords(3, 4), new SquareCoords(2, 5), Enums.PieceType.NONE);
+            game.Move(new SquareCoords(5, 1), new SquareCoords(5, 3));
+            Console.WriteLine(game.State);
+            game.Move(new SquareCoords(4, 6), new SquareCoords(4, 4));
+            Console.WriteLine(game.State);
+            game.Move(new SquareCoords(6, 1), new SquareCoords(6, 3));
+            Console.WriteLine(game.State);
+            game.Move(new SquareCoords(3, 7), new SquareCoords(7, 3));
+            Console.WriteLine(game.State);
             Console.WriteLine(game.Board.ToString());
 
-            var moves = game.MoveSquares(new SquareCoords(4, 7));
-            foreach (var move in moves)
+            foreach (var move in game.LegalMoves)
                 Console.WriteLine(move.ToString());
         }
     }
