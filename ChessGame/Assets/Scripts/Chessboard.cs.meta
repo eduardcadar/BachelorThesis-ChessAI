@@ -1,0 +1,29 @@
+fileFormatVersion: 2
+guid: 2a91a7dcc1ce47348b5c6ab59f9b1899
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - tileMaterial: {fileID: 2100000, guid: a36ec602a617b4d42b094feb405c02e6, type: 2}
+  - selectedMaterial: {fileID: 2100000, guid: 7212bb8f88e2762409f9717b9d941b20, type: 2}
+  - SelectedSquarePrefab: {fileID: 4027783264277281493, guid: 747d98fe41fbf53428ddffc45b4ea3d7, type: 3}
+  - ValidMoveSquarePrefab: {fileID: 5751573797900784931, guid: 99fcf166f5ac6b14dbe8ba18a55cbd07, type: 3}
+  - ThreatMapSquarePrefab: {fileID: 8962649100337123587, guid: 3a905665d6a76514ead7a933435ccd81, type: 3}
+  - PawnW: {fileID: 4144304284461224129, guid: 193bef98d2732484ea2bfcf9d3f176ad, type: 3}
+  - KnightW: {fileID: 7019284413450516670, guid: ac4cd9acd7e4e984fbf08bd8947209cb, type: 3}
+  - PawnB: {fileID: 8186597375334142664, guid: 826122fa3dbb502429a1b5a1616f2485, type: 3}
+  - KnightB: {fileID: 6696577671956380555, guid: 0900cc6ef4d875748aaca9f487bcba00, type: 3}
+  - BishopB: {fileID: 2918685197176944972, guid: 830de1ebd5f24094fa12a5eb68cadb48, type: 3}
+  - BishopW: {fileID: 379427508362301602, guid: f119306514eb89144b04da24f8377521, type: 3}
+  - RookB: {fileID: 5789547488288156924, guid: 704ad2c81d7d7f148a2c158ceb348006, type: 3}
+  - RookW: {fileID: 4452075801424535158, guid: ecdc2825c0b1f694380457758096ad2a, type: 3}
+  - QueenB: {fileID: 1002461265192574287, guid: 35b38239950d9cc49bcdc75e3f265f53, type: 3}
+  - QueenW: {fileID: 8398616077506499290, guid: b13f896060cfd4d49bbeed2e7a113da0, type: 3}
+  - KingB: {fileID: 2852621993858039893, guid: 32a6c4c0b7552754f8f55453dbed19ec, type: 3}
+  - KingW: {fileID: 7283710242718555346, guid: 6372a5568504faa4dac9acee5cca89a1, type: 3}
+  - SelectedSquare: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
