@@ -39,6 +39,14 @@ public class BoardTile : MonoBehaviour
                         .GetComponentInChildren<Piece>();
                     Destroy(capturedPawn.PieceGameObject);
                 }
+                else if (moveInfo.MoveType == MoveType.CASTLE)
+                {
+                    SimpleMove rookMove = Utils.GetRookCastleMove(moveInfo.To);
+                    Piece rookToMove = chessboard.GetTile(rookMove.From).GetComponentInChildren<Piece>();
+                    BoardTile tileToMoveTo = chessboard.GetTile(rookMove.To).GetComponent<BoardTile>();
+                    rookToMove.transform.parent = tileToMoveTo.transform;
+                    rookToMove.transform.position = tileToMoveTo.transform.position;
+                }
 
                 Piece pieceToMove = chessboard.SelectedSquare.transform.parent.GetComponentInChildren<Piece>();
                 pieceToMove.transform.parent = clickedSquare.transform;

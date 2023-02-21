@@ -7,8 +7,6 @@ namespace ChessGameLibrary
         public PieceType Type;
         public PieceColor Color;
 
-        public Piece() { }
-
         public Piece(PieceType type, PieceColor color) { Type = type; Color = color; }
 
         public override string ToString()

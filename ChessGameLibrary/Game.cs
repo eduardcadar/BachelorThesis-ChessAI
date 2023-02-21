@@ -13,6 +13,12 @@ namespace ChessGameLibrary
         public GameState State;
         public List<MoveInfo> MovesHistory = new List<MoveInfo>();
         public List<SimpleMove> LegalMoves = new List<SimpleMove>();
+        public bool WhiteCanCastleKing;
+        public bool BlackCanCastleKing;
+        public bool WhiteCanCastleQueen;
+        public bool BlackCanCastleQueen;
+        public int HalfmoveClock;
+        public int NoMoves;
 
         public bool SetPositionFromFEN(string fen)
         {
@@ -56,12 +62,16 @@ namespace ChessGameLibrary
                 default: return false;
             }
 
-            if (fields[3] != "-")
-            {
-                // set enpassant square, fields[3] is the square, format: "a2" (file letter then rank number)
-            }
-            else
-                EnPassantSquare = null;
+            WhiteCanCastleKing = fields[2].Contains('K');
+            WhiteCanCastleQueen = fields[2].Contains('Q');
+            BlackCanCastleKing = fields[2].Contains('k');
+            BlackCanCastleQueen = fields[2].Contains('q');
+
+            EnPassantSquare = fields[3] != "-" ? new SquareCoords(fields[3]) : null;
+
+            HalfmoveClock = int.Parse(fields[4]);
+
+            NoMoves = int.Parse(fields[5]);
 
             State = GameState.INPROGRESS;
             UpdateThreatMap();
@@ -91,8 +101,21 @@ namespace ChessGameLibrary
             Board.Squares[to.File, to.Rank].Piece = null;
             if (moveToUndo.CapturedPiece != null)
                 Board.Squares[to.File, to.Rank].Piece = moveToUndo.CapturedPiece;
+
+            if (moveToUndo.MoveType == MoveType.CASTLE) // if castle move, also move the rook back
+            {
+                SimpleMove rookMove = Utils.GetRookCastleMove(to);
+                Board.GetSquare(rookMove.From).Piece = Board.GetSquare(rookMove.To).Piece;
+                Board.GetSquare(rookMove.To).Piece = null;
+            }
             PlayerToMove = PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
             EnPassantSquare = moveToUndo.PrevEnPassantSquare;
+            WhiteCanCastleKing = moveToUndo.PrevWhiteCanCastleKing;
+            WhiteCanCastleQueen = moveToUndo.PrevWhiteCanCastleQueen;
+            BlackCanCastleKing = moveToUndo.PrevBlackCanCastleKing;
+            BlackCanCastleQueen = moveToUndo.PrevBlackCanCastleQueen;
+            HalfmoveClock = moveToUndo.PrevHalfmoveClock;
+            NoMoves--;
             UpdateThreatMap();
         }
 
@@ -101,7 +124,12 @@ namespace ChessGameLibrary
             Square fromSq = Board.Squares[from.File, from.Rank];
             Piece piece = fromSq.Piece;
             Square toSq = Board.Squares[to.File, to.Rank];
-            MoveInfo moveInfo = new MoveInfo(MoveType.NORMAL, piece, from, to);
+            MoveInfo moveInfo = new MoveInfo(MoveType.NORMAL, piece, from, to,
+                WhiteCanCastleKing, WhiteCanCastleQueen, BlackCanCastleKing, BlackCanCastleQueen)
+            {
+                PrevEnPassantSquare = EnPassantSquare,
+                PrevHalfmoveClock = HalfmoveClock
+            };
             if (piece == null)
             {
                 Console.WriteLine("NO PIECE ON FROM SQUARE");
@@ -114,6 +142,18 @@ namespace ChessGameLibrary
                 return moveInfo;
                 //error
             }
+            // to disable castling rights after king/rook moves or rook is captured
+            if (piece.Type == PieceType.KING) KingMoved(piece.Color);
+            RookMovedOrCaptured(from);
+            RookMovedOrCaptured(to);
+            if (Utils.IsCastleMove(piece, from, to)) // if castle move, also move the rook
+            {
+                SimpleMove rookMove = Utils.GetRookCastleMove(to);
+                Board.GetSquare(rookMove.To).Piece = Board.GetSquare(rookMove.From).Piece;
+                Board.GetSquare(rookMove.From).Piece = null;
+                moveInfo.MoveType = MoveType.CASTLE;
+            }
+
             int lastPawnRank = piece.Color == PieceColor.WHITE ? 7 : 0;
             int direction = piece.Color == PieceColor.WHITE ? 1 : -1;
             if (piece.Type == PieceType.PAWN && to.Equals(EnPassantSquare))
@@ -121,7 +161,6 @@ namespace ChessGameLibrary
                 moveInfo.MoveType = MoveType.ENPASSANT;
                 Board.Squares[to.File, to.Rank - direction].Piece = null;
             }
-            moveInfo.PrevEnPassantSquare = EnPassantSquare;
             EnPassantSquare = null;
             if (piece.Type == PieceType.PAWN && Math.Abs(from.Rank - to.Rank) == 2)
                 EnPassantSquare = new SquareCoords(from.File, (from.Rank + to.Rank) / 2);
@@ -136,11 +175,43 @@ namespace ChessGameLibrary
             fromSq.Piece = null;
             PlayerToMove = PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
             MovesHistory.Add(moveInfo);
+            if (piece.Type == PieceType.PAWN || moveInfo.CapturedPiece != null)
+                HalfmoveClock = 0;
+            else
+                HalfmoveClock++;
+            NoMoves++;
             UpdateThreatMap();
             if (!justCheck)
                 RefreshLegalMoves();
             CheckGameState();
             return moveInfo;
+        }
+
+        private void RookMovedOrCaptured(SquareCoords sq)
+        {
+            if (sq.Equals(0, 0))
+                WhiteCanCastleQueen = false;
+            else if (sq.Equals(7, 0))
+                WhiteCanCastleKing = false;
+            else if (sq.Equals(0, 7))
+                BlackCanCastleQueen = false;
+            else if (sq.Equals(7, 7))
+                BlackCanCastleKing = false;
+        }
+
+        private void KingMoved(PieceColor pieceColor)
+        {
+            switch (pieceColor)
+            {
+                case PieceColor.WHITE:
+                    WhiteCanCastleKing = false;
+                    WhiteCanCastleQueen = false;
+                    break;
+                case PieceColor.BLACK:
+                    BlackCanCastleKing = false;
+                    BlackCanCastleQueen = false;
+                    break;
+            }
         }
 
         private void CheckGameState()
@@ -294,7 +365,7 @@ namespace ChessGameLibrary
             Board.Squares[file, rank] = square;
         }
 
-       private List<SquareCoords> KingMoves(PieceColor pieceColor, SquareCoords from)
+        private List<SquareCoords> KingMoves(PieceColor pieceColor, SquareCoords from)
         {
             List<SquareCoords> squares = new List<SquareCoords>();
             // up
@@ -321,6 +392,43 @@ namespace ChessGameLibrary
             // left and up
             if (IsSquareEmptyOrEnemyPiece(pieceColor, from.File - 1, from.Rank + 1))
                 squares.Add(new SquareCoords(from.File - 1, from.Rank + 1));
+
+            // CASTLE
+            switch (pieceColor)
+            {
+                case PieceColor.WHITE:
+                    if (WhiteCanCastleKing)
+                    {
+                        if (!Board.Squares[4, 0].IsAttackedByBlack &&
+                            IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 5, 0) &&
+                            IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 6, 0))
+                            squares.Add(new SquareCoords(6, 0));
+                    }
+                    if (WhiteCanCastleQueen)
+                    {
+                        if (!Board.Squares[4, 0].IsAttackedByBlack &&
+                            IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 2, 0) &&
+                            IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 3, 0))
+                            squares.Add(new SquareCoords(2, 0));
+                    }
+                    break;
+                case PieceColor.BLACK:
+                    if (BlackCanCastleKing)
+                    {
+                        if (!Board.Squares[4, 7].IsAttackedByWhite &&
+                            IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 5, 7) &&
+                            IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 6, 7))
+                            squares.Add(new SquareCoords(6, 7));
+                    }
+                    if (BlackCanCastleQueen)
+                    {
+                        if (!Board.Squares[4, 7].IsAttackedByWhite &&
+                            IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 2, 7) &&
+                            IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 3, 7))
+                            squares.Add(new SquareCoords(2, 7));
+                    }
+                    break;
+            }
             return squares;
         }
 
@@ -515,6 +623,14 @@ namespace ChessGameLibrary
                 i++;
             }
             return squares;
+        }
+
+        private bool IsSquareEmptyAndNotAttacked(PieceColor pieceColor, int file, int rank)
+        {
+            Square sq = Board.Squares[file, rank];
+            if (sq.Piece != null)
+                return false;
+            return pieceColor == PieceColor.WHITE ? !sq.IsAttackedByWhite : !sq.IsAttackedByBlack;
         }
 
         private bool IsEmptySquare(int file, int rank)

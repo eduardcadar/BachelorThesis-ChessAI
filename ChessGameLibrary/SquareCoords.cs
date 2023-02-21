@@ -1,4 +1,6 @@
-﻿namespace ChessGameLibrary
+﻿using System.IO;
+
+namespace ChessGameLibrary
 {
     public class SquareCoords
     {
@@ -9,6 +11,19 @@
         {
             File = file;
             Rank = rank;
+        }
+
+        public SquareCoords(string square)
+        {
+            if (square.Length != 2 ||
+                square[0] < 'a' || square[0] > 'h' ||
+                square[1] < '1' || square[1] > '8')
+            {
+                // error
+                return;
+            }
+            File = square[0] - 97;
+            Rank = int.Parse(square[1].ToString());
         }
 
         public override bool Equals(object obj)

@@ -142,12 +142,12 @@ public class Chessboard : MonoBehaviour
         {
             pieceGameObject = pieceType switch
             {
-                PieceType.PAWN => Instantiate(PawnW, tileObject.transform.position, Quaternion.identity),
-                PieceType.KNIGHT => Instantiate(KnightW, tileObject.transform.position, Quaternion.identity),
-                PieceType.BISHOP => Instantiate(BishopW, tileObject.transform.position, Quaternion.identity),
-                PieceType.ROOK => Instantiate(RookW, tileObject.transform.position, Quaternion.identity),
-                PieceType.QUEEN => Instantiate(QueenW, tileObject.transform.position, Quaternion.identity),
-                PieceType.KING => Instantiate(KingW, tileObject.transform.position, Quaternion.identity),
+                PieceType.PAWN => Instantiate(PawnW, tileObject.transform),
+                PieceType.KNIGHT => Instantiate(KnightW, tileObject.transform),
+                PieceType.BISHOP => Instantiate(BishopW, tileObject.transform),
+                PieceType.ROOK => Instantiate(RookW, tileObject.transform),
+                PieceType.QUEEN => Instantiate(QueenW, tileObject.transform),
+                PieceType.KING => Instantiate(KingW, tileObject.transform),
                 _ => null,
             };
         }
@@ -155,12 +155,12 @@ public class Chessboard : MonoBehaviour
         {
             pieceGameObject = pieceType switch
             {
-                PieceType.PAWN => Instantiate(PawnB, tileObject.transform.position, Quaternion.identity),
-                PieceType.KNIGHT => Instantiate(KnightB, tileObject.transform.position, Quaternion.identity),
-                PieceType.BISHOP => Instantiate(BishopB, tileObject.transform.position, Quaternion.identity),
-                PieceType.ROOK => Instantiate(RookB, tileObject.transform.position, Quaternion.identity),
-                PieceType.QUEEN => Instantiate(QueenB, tileObject.transform.position, Quaternion.identity),
-                PieceType.KING => Instantiate(KingB, tileObject.transform.position, Quaternion.identity),
+                PieceType.PAWN => Instantiate(PawnB, tileObject.transform),
+                PieceType.KNIGHT => Instantiate(KnightB, tileObject.transform),
+                PieceType.BISHOP => Instantiate(BishopB, tileObject.transform),
+                PieceType.ROOK => Instantiate(RookB, tileObject.transform),
+                PieceType.QUEEN => Instantiate(QueenB, tileObject.transform),
+                PieceType.KING => Instantiate(KingB, tileObject.transform),
                 _ => null,
             };
         }
@@ -192,7 +192,7 @@ public class Chessboard : MonoBehaviour
 
     private GameObject GenerateSingleTile(float tileSize, int x, int y)
     {
-        GameObject tileGameObject = new($"X:{x}, Y:{y}");
+        GameObject tileGameObject = new($"File:{x}, Rank:{y}");
         BoardTile tileObject = tileGameObject.AddComponent<BoardTile>();
 
         tileObject.InitializeTile(this, x, y);

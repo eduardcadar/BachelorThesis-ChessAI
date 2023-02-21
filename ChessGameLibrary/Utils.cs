@@ -1,4 +1,6 @@
-﻿namespace ChessGameLibrary
+﻿using ChessGameLibrary.Enums;
+
+namespace ChessGameLibrary
 {
     public static class Utils
     {
@@ -15,5 +17,36 @@
         {
             2, 1, -1, -2, 2, 1, -1, -2
         };
+
+        public static SimpleMove GetRookCastleMove(SquareCoords kingSquare)
+        {
+            if (kingSquare.Rank == 0)
+            {
+                if (kingSquare.File == 6)
+                    return new SimpleMove(new SquareCoords(7, 0), new SquareCoords(5, 0));
+                else if (kingSquare.File == 2)
+                    return new SimpleMove(new SquareCoords(0, 0), new SquareCoords(3, 0));
+            }
+            else if (kingSquare.Rank == 7)
+            {
+                if (kingSquare.File == 6)
+                    return new SimpleMove(new SquareCoords(7, 7), new SquareCoords(5, 7));
+                else if (kingSquare.File == 2)
+                    return new SimpleMove(new SquareCoords(0, 7), new SquareCoords(3, 7));
+            }
+            // error
+            return new SimpleMove(new SquareCoords(0, 0), new SquareCoords(0, 0));
+        }
+
+        public static bool IsCastleMove(Piece piece, SquareCoords from, SquareCoords to)
+        {
+            if (piece.Type != PieceType.KING)
+                return false;
+            int firstRank = piece.Color == PieceColor.WHITE ? 0 : 7;
+            if (from.Equals(4, firstRank) &&
+                (to.Equals(6, firstRank) || to.Equals(2, firstRank)))
+                return true;
+            return false;
+        }
     }
 }

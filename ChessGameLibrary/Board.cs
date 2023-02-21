@@ -13,6 +13,11 @@ namespace ChessGameLibrary
                     Squares[i,j] = new Square(new SquareCoords(i, j), null);
         }
 
+        public Square GetSquare(SquareCoords squareCoords)
+        {
+            return Squares[squareCoords.File, squareCoords.Rank];
+        }
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
