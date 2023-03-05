@@ -3,6 +3,7 @@ using ChessGameLibrary.Enums;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using LibraryPiece = ChessGameLibrary.Piece;
 
 public class BoardTile : MonoBehaviour
 {
@@ -27,8 +28,18 @@ public class BoardTile : MonoBehaviour
             // if click on validMoveSquare move the selected piece
             if (validMoveSq != null)
             {
+                Piece pieceToMove = chessboard.SelectedSquare.transform.parent.GetComponentInChildren<Piece>();
+                int lastPawnRank = pieceToMove.LibraryPiece.Color == PieceColor.WHITE ? 7 : 0;
+                PieceType promotedTo = PieceType.QUEEN;
+                if (pieceToMove.LibraryPiece.Type == PieceType.PAWN && clickedSquare.y == lastPawnRank)
+                {
+                    Debug.Log("select promotion piece");
+                    // pop-up to select promotion piece
+                    promotedTo = PieceType.QUEEN;
+                }
                 var fromTile = chessboard.SelectedSquare.transform.parent.ConvertTo<BoardTile>();
-                MoveInfo moveInfo = chessboard.Game.Move(new SquareCoords(fromTile.x, fromTile.y), new SquareCoords(x, y));
+                MoveInfo moveInfo = chessboard.Game.Move(new SquareCoords(fromTile.x, fromTile.y), new SquareCoords(x, y),
+                    promotedTo);
                 Piece pieceToCapture = clickedSquare.GetComponentInChildren<Piece>();
                 if (pieceToCapture != null)
                     Destroy(pieceToCapture.PieceGameObject);
@@ -47,10 +58,18 @@ public class BoardTile : MonoBehaviour
                     rookToMove.transform.parent = tileToMoveTo.transform;
                     rookToMove.transform.position = tileToMoveTo.transform.position;
                 }
+                
+                if (moveInfo.MoveType == MoveType.PROMOTION)
+                {
+                    Chessboard.InstantiatePiece(moveInfo.PromotedTo, moveInfo.Piece.Color, x, y);
+                    Destroy(pieceToMove.PieceGameObject);
+                }
+                else
+                {
+                    pieceToMove.transform.parent = clickedSquare.transform;
+                    pieceToMove.transform.position = clickedSquare.transform.position;
+                }
 
-                Piece pieceToMove = chessboard.SelectedSquare.transform.parent.GetComponentInChildren<Piece>();
-                pieceToMove.transform.parent = clickedSquare.transform;
-                pieceToMove.transform.position = clickedSquare.transform.position;
                 if (chessboard.Game.State != GameState.INPROGRESS)
                     Debug.Log(chessboard.Game.State);
             }

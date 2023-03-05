@@ -164,15 +164,16 @@ namespace ChessGameLibrary
             EnPassantSquare = null;
             if (piece.Type == PieceType.PAWN && Math.Abs(from.Rank - to.Rank) == 2)
                 EnPassantSquare = new SquareCoords(from.File, (from.Rank + to.Rank) / 2);
+            if (toSq.Piece != null)
+                moveInfo.CapturedPiece = new Piece(toSq.Piece.Type, toSq.Piece.Color);
+            toSq.Piece = piece;
+            fromSq.Piece = null;
             if ((piece.Type == PieceType.PAWN) && (to.Rank == lastPawnRank))
             {
                 moveInfo.MoveType = MoveType.PROMOTION;
                 moveInfo.PromotedTo = promotedTo;
+                toSq.Piece.Type = promotedTo;
             }
-            if (toSq.Piece != null)
-                moveInfo.CapturedPiece = toSq.Piece;
-            toSq.Piece = piece;
-            fromSq.Piece = null;
             PlayerToMove = PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
             MovesHistory.Add(moveInfo);
             if (piece.Type == PieceType.PAWN || moveInfo.CapturedPiece != null)
@@ -181,6 +182,11 @@ namespace ChessGameLibrary
                 HalfmoveClock++;
             NoMoves++;
             UpdateThreatMap();
+            if (HalfmoveClock == Utils.HALFMOVE_CLOCK_LIMIT)
+            {
+                State = GameState.DRAW;
+                return moveInfo;
+            }
             if (!justCheck)
                 RefreshLegalMoves();
             CheckGameState();
@@ -233,7 +239,7 @@ namespace ChessGameLibrary
 
         private bool CheckMove(SquareCoords from, SquareCoords to)
         {
-            Move(from, to, justCheck: true);
+            Move(from, to, promotedTo: PieceType.PAWN, justCheck: true);
             bool boardIsValid = BoardIsValid();
             UndoMove();
             return boardIsValid;

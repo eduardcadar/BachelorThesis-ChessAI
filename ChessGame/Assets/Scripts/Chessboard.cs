@@ -25,7 +25,7 @@ public class Chessboard : MonoBehaviour
     [SerializeField] private GameObject KingW;
 
     public Game Game;
-    public GameObject SelectedSquare = null;
+    public GameObject SelectedSquare { get; set; } = null;
     public List<GameObject> ValidMoves = new();
     public List<GameObject> ThreatMap = new();
     public bool ShowWhiteThreatMap = false;
@@ -132,7 +132,7 @@ public class Chessboard : MonoBehaviour
         return GeneratePiecesFromFEN(startingFEN);
     }
 
-    private void InstantiatePiece(PieceType pieceType, PieceColor color, int x, int y)
+    public void InstantiatePiece(PieceType pieceType, PieceColor color, int x, int y)
     {
         if (x < 0 || x >= TILE_COUNT_X || y < 0 || y >= TILE_COUNT_Y)
             return;
