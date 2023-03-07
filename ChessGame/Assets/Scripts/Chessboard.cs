@@ -11,6 +11,7 @@ public class Chessboard : MonoBehaviour
     public GameObject SelectedSquarePrefab;
     public GameObject ValidMoveSquarePrefab;
     public GameObject ThreatMapSquarePrefab;
+    public WhitePromotionPieceScript SelectPromotionPieceW;
     [SerializeField] private GameObject PawnW;
     [SerializeField] private GameObject KnightW;
     [SerializeField] private GameObject PawnB;
@@ -35,20 +36,22 @@ public class Chessboard : MonoBehaviour
     private static readonly string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
+    private float TILE_SIZE;
     private GameObject[,] tiles;
 
     private void Awake()
     {
         selectedMaterial.color = Color.red;
-        GenerateAllTiles(1, TILE_COUNT_X, TILE_COUNT_Y);
-        int ok = GenerateClassicPieces();
-        //int ok = GeneratePiecesFromFEN(startingFEN);
+        GenerateAllTiles(TILE_COUNT_X, TILE_COUNT_Y);
+        //int ok = GenerateClassicPieces();
+        string FEN = "rnbqkbnr/P3pppp/2pp4/8/8/8/PP1PPPPP/RNBQKBNR w KQkq - 0 5";
+        int ok = GeneratePiecesFromFEN(FEN);
         if (ok < 0)
         {
             //error
         }
         Game = new();
-        Game.SetPositionFromFEN(startingFEN);
+        Game.SetPositionFromFEN(FEN);
     }
 
     public void RemoveThreatMap()
@@ -170,6 +173,7 @@ public class Chessboard : MonoBehaviour
             pieceGameObject.AddComponent<SpriteRenderer>().sortingLayerName = "Pieces";
             piece.Initialize(pieceGameObject, pieceType, color);
             pieceGameObject.transform.parent = tileObject.transform;
+            //pieceGameObject.transform.localScale = new Vector3(TILE_SIZE, TILE_SIZE);
         }
     }
 
@@ -182,22 +186,24 @@ public class Chessboard : MonoBehaviour
     }
 
     // Generate the board
-    private void GenerateAllTiles(float tileSize, int tileCountX, int tileCountY)
+    private void GenerateAllTiles(int tileCountX, int tileCountY)
     {
+        TILE_SIZE = 0.0623f;
         tiles = new GameObject[tileCountX, tileCountY];
         for (int x = 0; x < tileCountX; x++)
             for (int y = 0; y < tileCountY; y++)
-                tiles[x, y] = GenerateSingleTile(tileSize, x, y);
+                tiles[x, y] = GenerateSingleTile(TILE_SIZE, x, y);
     }
 
     private GameObject GenerateSingleTile(float tileSize, int x, int y)
     {
         GameObject tileGameObject = new($"File:{x}, Rank:{y}");
+        tileGameObject.transform.localScale = new Vector3(tileSize, tileSize);
         BoardTile tileObject = tileGameObject.AddComponent<BoardTile>();
 
         tileObject.InitializeTile(this, x, y);
-        tileObject.transform.position = new Vector3(-4 + x * tileSize + tileSize/2f,
-            -4 + y * tileSize + tileSize/2f, 0);
+        tileObject.transform.position = new Vector3(-4 * tileSize + x * tileSize + tileSize/2f,
+            -4 * tileSize + y * tileSize + tileSize/2f, 0);
         tileObject.transform.parent = transform;
 
         Mesh mesh = new();

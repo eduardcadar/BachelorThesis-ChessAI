@@ -1,5 +1,6 @@
 using ChessGameLibrary;
 using ChessGameLibrary.Enums;
+using System.Collections;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -10,96 +11,135 @@ public class BoardTile : MonoBehaviour
     public Chessboard Chessboard;
     public int x;
     public int y;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
+    private bool _finishedMove = true;
 
     private void OnMouseDown()
     {
-        Chessboard chessboard = transform.parent.GetComponent<Chessboard>();
-        chessboard.RemoveThreatMap();
-        if (chessboard.SelectedSquare != null)
+        if (Chessboard.SelectPromotionPieceW.gameObject.activeSelf)
+            return;
+        Chessboard.RemoveThreatMap();
+        if (Chessboard.SelectedSquare == null)
         {
-            var clickedSquare = this;
+            Piece piece = GetComponentInChildren<Piece>();
+            if (piece != null && piece.LibraryPiece.Color == Chessboard.Game.PlayerToMove)
+                SelectPiece();
+        }
+        else
+        {
+            BoardTile clickedSquare = this;
             var validMoveSq = clickedSquare.GetComponentsInChildren<Transform>()
                 .SingleOrDefault(c => c.name.Contains("ValidMoveSquare"));
             // if click on validMoveSquare move the selected piece
             if (validMoveSq != null)
             {
-                Piece pieceToMove = chessboard.SelectedSquare.transform.parent.GetComponentInChildren<Piece>();
-                int lastPawnRank = pieceToMove.LibraryPiece.Color == PieceColor.WHITE ? 7 : 0;
-                PieceType promotedTo = PieceType.QUEEN;
-                if (pieceToMove.LibraryPiece.Type == PieceType.PAWN && clickedSquare.y == lastPawnRank)
-                {
-                    Debug.Log("select promotion piece");
-                    // pop-up to select promotion piece
-                    promotedTo = PieceType.QUEEN;
-                }
-                var fromTile = chessboard.SelectedSquare.transform.parent.ConvertTo<BoardTile>();
-                MoveInfo moveInfo = chessboard.Game.Move(new SquareCoords(fromTile.x, fromTile.y), new SquareCoords(x, y),
-                    promotedTo);
-                Piece pieceToCapture = clickedSquare.GetComponentInChildren<Piece>();
-                if (pieceToCapture != null)
-                    Destroy(pieceToCapture.PieceGameObject);
-                else if (moveInfo.MoveType == MoveType.ENPASSANT)
-                {
-                    int direction = moveInfo.Piece.Color == PieceColor.WHITE ? 1 : -1;
-                    Piece capturedPawn = chessboard.GetTile(moveInfo.To.File, moveInfo.To.Rank - direction)
-                        .GetComponentInChildren<Piece>();
-                    Destroy(capturedPawn.PieceGameObject);
-                }
-                else if (moveInfo.MoveType == MoveType.CASTLE)
-                {
-                    SimpleMove rookMove = Utils.GetRookCastleMove(moveInfo.To);
-                    Piece rookToMove = chessboard.GetTile(rookMove.From).GetComponentInChildren<Piece>();
-                    BoardTile tileToMoveTo = chessboard.GetTile(rookMove.To).GetComponent<BoardTile>();
-                    rookToMove.transform.parent = tileToMoveTo.transform;
-                    rookToMove.transform.position = tileToMoveTo.transform.position;
-                }
-                
-                if (moveInfo.MoveType == MoveType.PROMOTION)
-                {
-                    Chessboard.InstantiatePiece(moveInfo.PromotedTo, moveInfo.Piece.Color, x, y);
-                    Destroy(pieceToMove.PieceGameObject);
-                }
-                else
-                {
-                    pieceToMove.transform.parent = clickedSquare.transform;
-                    pieceToMove.transform.position = clickedSquare.transform.position;
-                }
-
-                if (chessboard.Game.State != GameState.INPROGRESS)
-                    Debug.Log(chessboard.Game.State);
+                _finishedMove = false;
+                MovePiece(clickedSquare);
             }
-            //
-            Destroy(chessboard.SelectedSquare);
-            chessboard.SelectedSquare = null;
-            foreach (var move in chessboard.ValidMoves)
-                Destroy(move);
-            chessboard.ValidMoves.Clear();
+            if (_finishedMove)
+            {
+                DestroySelectedAndValidSquares();
+            }
             return;
-        }
-        Piece piece = GetComponentInChildren<Piece>();
-        if (piece == null || piece.LibraryPiece.Color != chessboard.Game.PlayerToMove)
-            return;
-        chessboard.SelectedSquare = Instantiate(chessboard.SelectedSquarePrefab, transform);
-        chessboard.SelectedSquare.AddComponent<SpriteRenderer>().sortingLayerName = "Tiles";
-
-        SquareCoords[] validMoveSquares = chessboard.Game.MoveSquares(new SquareCoords(x, y))
-            .ToArray();
-        foreach (SquareCoords sq in validMoveSquares)
-        {
-            GameObject validSquare = Instantiate(chessboard.ValidMoveSquarePrefab, chessboard.GetTile(sq.File, sq.Rank).transform);
-            validSquare.AddComponent<SpriteRenderer>().sortingLayerName = "Tiles";
-            chessboard.ValidMoves.Add(validSquare);
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void SelectPiece()
     {
+        Chessboard.SelectedSquare = Instantiate(Chessboard.SelectedSquarePrefab, transform);
+        Chessboard.SelectedSquare.AddComponent<SpriteRenderer>().sortingLayerName = "Tiles";
+
+        SquareCoords[] validMoveSquares = Chessboard.Game.MoveSquares(new SquareCoords(x, y))
+            .ToArray();
+        foreach (SquareCoords sq in validMoveSquares)
+        {
+            GameObject validSquare = Instantiate(Chessboard.ValidMoveSquarePrefab, Chessboard.GetTile(sq.File, sq.Rank).transform);
+            validSquare.AddComponent<SpriteRenderer>().sortingLayerName = "Tiles";
+            Chessboard.ValidMoves.Add(validSquare);
+        }
+    }
+
+    public void DestroySelectedAndValidSquares()
+    {
+        if (Chessboard.SelectedSquare == null)
+            return;
+        Destroy(Chessboard.SelectedSquare);
+        Chessboard.SelectedSquare = null;
+        foreach (var move in Chessboard.ValidMoves)
+            Destroy(move);
+        Chessboard.ValidMoves.Clear();
+    }
+
+    IEnumerator SelectPromotionPiece(BoardTile clickedSquare, Piece pieceToMove)
+    {
+        yield return new WaitWhile(() => Chessboard.SelectPromotionPieceW.PieceType == PieceType.NONE);
+        Chessboard.SelectPromotionPieceW.gameObject.SetActive(false);
+        Debug.Log("Piece selected: " + Chessboard.SelectPromotionPieceW.PieceType);
+        ContinueMove(clickedSquare, pieceToMove);
+    }
+
+    private IEnumerator PromotionMove(BoardTile clickedSquare, Piece pieceToMove)
+    {
+        // pop-up to select promotion piece
+        //var prefab = switch color
+        //var selectPiecePopup = Instantiate(chessboard.SelectPromotionPieceWPrefab, chessboard.transform);
+        Chessboard.SelectPromotionPieceW.PieceType = PieceType.NONE;
+        Chessboard.SelectPromotionPieceW.gameObject.SetActive(true);
+        yield return StartCoroutine(SelectPromotionPiece(clickedSquare, pieceToMove));
+    }
+
+    private void ContinueMove(BoardTile clickedSquare, Piece pieceToMove)
+    {
+        PieceType promotedTo = Chessboard.SelectPromotionPieceW.PieceType;
+        var fromTile = Chessboard.SelectedSquare.transform.parent.ConvertTo<BoardTile>();
+        MoveInfo moveInfo = Chessboard.Game.Move(new SquareCoords(fromTile.x, fromTile.y), new SquareCoords(x, y),
+            promotedTo);
+        Piece pieceToCapture = clickedSquare.GetComponentInChildren<Piece>();
+        if (pieceToCapture != null)
+            Destroy(pieceToCapture.PieceGameObject);
+        else if (moveInfo.MoveType == MoveType.ENPASSANT)
+        {
+            int direction = moveInfo.Piece.Color == PieceColor.WHITE ? 1 : -1;
+            Piece capturedPawn = Chessboard.GetTile(moveInfo.To.File, moveInfo.To.Rank - direction)
+                .GetComponentInChildren<Piece>();
+            Destroy(capturedPawn.PieceGameObject);
+        }
+        else if (moveInfo.MoveType == MoveType.CASTLE)
+        {
+            SimpleMove rookMove = Utils.GetRookCastleMove(moveInfo.To);
+            Piece rookToMove = Chessboard.GetTile(rookMove.From).GetComponentInChildren<Piece>();
+            BoardTile tileToMoveTo = Chessboard.GetTile(rookMove.To).GetComponent<BoardTile>();
+            rookToMove.transform.parent = tileToMoveTo.transform;
+            rookToMove.transform.position = tileToMoveTo.transform.position;
+        }
+
+        if (moveInfo.MoveType == MoveType.PROMOTION)
+        {
+            Chessboard.InstantiatePiece(moveInfo.PromotedTo, moveInfo.Piece.Color, x, y);
+            Destroy(pieceToMove.PieceGameObject);
+        }
+        else
+        {
+            pieceToMove.transform.parent = clickedSquare.transform;
+            pieceToMove.transform.position = clickedSquare.transform.position;
+        }
+        _finishedMove = true;
+
+        if (Chessboard.Game.State != GameState.INPROGRESS)
+            Debug.Log(Chessboard.Game.State);
+        DestroySelectedAndValidSquares();
+    }
+
+    private void MovePiece(BoardTile clickedSquare)
+    {
+        Piece pieceToMove = Chessboard.SelectedSquare.transform.parent.GetComponentInChildren<Piece>();
+        int lastPawnRank = pieceToMove.LibraryPiece.Color == PieceColor.WHITE ? 7 : 0;
+        if (pieceToMove.LibraryPiece.Type == PieceType.PAWN && clickedSquare.y == lastPawnRank)
+        {
+            _finishedMove = false;
+            StartCoroutine(PromotionMove(clickedSquare, pieceToMove));
+            return;
+        }
+        ContinueMove(clickedSquare, pieceToMove);
     }
 
     public void InitializeTile(Chessboard chessboard, int x, int y)
