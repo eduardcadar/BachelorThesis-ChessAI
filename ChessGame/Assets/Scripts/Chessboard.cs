@@ -26,6 +26,8 @@ public class Chessboard : MonoBehaviour
     [SerializeField] private GameObject KingW;
 
     public Game Game;
+    //public bool IsPlayerWhiteHuman { get { return Game.PlayerTypeWhite == PlayerType.HUMAN; } }
+    //public bool IsPlayerBlackHuman { get { return Game.PlayerTypeBlack== PlayerType.HUMAN; } }
     public GameObject SelectedSquare { get; set; } = null;
     public List<GameObject> ValidMoves = new();
     public List<GameObject> ThreatMap = new();
@@ -37,6 +39,7 @@ public class Chessboard : MonoBehaviour
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
     private float TILE_SIZE;
+    public const float TIME_BEFORE_ENGINE_MOVES = 0.5f; // in seconds
     private GameObject[,] tiles;
 
     private void Awake()
@@ -44,14 +47,16 @@ public class Chessboard : MonoBehaviour
         selectedMaterial.color = Color.red;
         GenerateAllTiles(TILE_COUNT_X, TILE_COUNT_Y);
         //int ok = GenerateClassicPieces();
-        string FEN = "rnbqkbnr/P3pppp/2pp4/8/8/8/PP1PPPPP/RNBQKBNR w KQkq - 0 5";
+        string FEN = Utils.STARTING_FEN;
+        //string FEN = "rnbqkbnr/P3pppp/2pp4/8/8/8/PP1PPPPP/RNBQKBNR w KQkq - 0 5";
+        Game = new();
+        //Game.SetPlayerTypes(PlayerType.HUMAN, PlayerType.STOCKFISH);
+        Game.SetPositionFromFEN(FEN);
         int ok = GeneratePiecesFromFEN(FEN);
         if (ok < 0)
         {
             //error
         }
-        Game = new();
-        Game.SetPositionFromFEN(FEN);
     }
 
     public void RemoveThreatMap()

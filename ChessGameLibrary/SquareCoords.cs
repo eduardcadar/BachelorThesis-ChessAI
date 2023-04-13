@@ -23,7 +23,7 @@ namespace ChessGameLibrary
                 return;
             }
             File = square[0] - 97;
-            Rank = int.Parse(square[1].ToString());
+            Rank = int.Parse(square[1].ToString()) - 1;
         }
 
         public override bool Equals(object obj)

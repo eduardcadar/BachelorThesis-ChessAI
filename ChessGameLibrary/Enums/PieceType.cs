@@ -11,7 +11,7 @@
         KING
     }
 
-    static class PieceTypeExtensions
+    public static class PieceTypeExtensions
     {
         public static char GetLetterName(this PieceType pieceType)
         {

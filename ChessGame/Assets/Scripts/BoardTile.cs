@@ -2,22 +2,40 @@ using ChessGameLibrary;
 using ChessGameLibrary.Enums;
 using System.Collections;
 using System.Linq;
+using System.Threading;
 using Unity.VisualScripting;
 using UnityEngine;
-using LibraryPiece = ChessGameLibrary.Piece;
 
 public class BoardTile : MonoBehaviour
 {
     public Chessboard Chessboard;
     public int x;
     public int y;
-    private bool _finishedMove = true;
+    private static bool _finishedMove = true;
 
-    private void OnMouseDown()
+    private void Update()
     {
-        if (Chessboard.SelectPromotionPieceW.gameObject.activeSelf)
-            return;
-        Chessboard.RemoveThreatMap();
+        if (Chessboard.Game.State == GameState.INPROGRESS)
+        {
+            if (_finishedMove)
+            {
+                //switch (Chessboard.Game.PlayerToMove)
+                //{
+                //    case PieceColor.WHITE:
+                //        if (!Chessboard.IsPlayerWhiteHuman)
+                //            StartCoroutine(EngineMove());
+                //        break;
+                //    case PieceColor.BLACK:
+                //        if (!Chessboard.IsPlayerBlackHuman)
+                //            StartCoroutine(EngineMove());
+                //        break;
+                //}
+            }
+        }
+    }
+
+    private void HumanMove()
+    {
         if (Chessboard.SelectedSquare == null)
         {
             Piece piece = GetComponentInChildren<Piece>();
@@ -33,6 +51,7 @@ public class BoardTile : MonoBehaviour
             if (validMoveSq != null)
             {
                 _finishedMove = false;
+                Debug.Log("HUMAN MOVE");
                 MovePiece(clickedSquare);
             }
             if (_finishedMove)
@@ -40,6 +59,74 @@ public class BoardTile : MonoBehaviour
                 DestroySelectedAndValidSquares();
             }
             return;
+        }
+    }
+
+    IEnumerator EngineMove()
+    {
+        _finishedMove = false;
+        yield return new WaitForSecondsRealtime(Chessboard.TIME_BEFORE_ENGINE_MOVES);
+        int i = Random.Range(0, Chessboard.Game.LegalMoves.Count);
+        SimpleMove move = Chessboard.Game.LegalMoves[i];
+        Debug.Log("ENGINE MOVE: " + move.ToString());
+        MoveInfo moveInfo = Chessboard.Game.Move(move.From, move.To);
+        MoveOnBoard(moveInfo);
+
+        if (Chessboard.Game.State != GameState.INPROGRESS)
+            Debug.Log(Chessboard.Game.State);
+        _finishedMove = true;
+    }
+
+    private void MoveOnBoard(MoveInfo move)
+    {
+        Piece pieceToMove = Chessboard.GetTile(move.From).GetComponentInChildren<Piece>();
+        Piece pieceToCapture = Chessboard.GetTile(move.To).GetComponentInChildren<Piece>();
+        if (pieceToCapture != null)
+            Destroy(pieceToCapture.PieceGameObject);
+        else if (move.MoveType == MoveType.ENPASSANT)
+        {
+            int direction = move.Piece.Color == PieceColor.WHITE ? 1 : -1;
+            Piece capturedPawn = Chessboard.GetTile(move.To.File, move.To.Rank - direction)
+                .GetComponentInChildren<Piece>();
+            Destroy(capturedPawn.PieceGameObject);
+        }
+        else if (move.MoveType == MoveType.CASTLE)
+        {
+            SimpleMove rookMove = Utils.GetRookCastleMove(move.To);
+            Piece rookToMove = Chessboard.GetTile(rookMove.From).GetComponentInChildren<Piece>();
+            BoardTile tileToMoveTo = Chessboard.GetTile(rookMove.To).GetComponent<BoardTile>();
+            rookToMove.transform.parent = tileToMoveTo.transform;
+            rookToMove.transform.position = tileToMoveTo.transform.position;
+        }
+
+        if (move.MoveType == MoveType.PROMOTION)
+        {
+            Chessboard.InstantiatePiece(move.PromotedTo, move.Piece.Color, move.To.File, move.To.Rank);
+            Destroy(pieceToMove.PieceGameObject);
+        }
+        else
+        {
+            BoardTile boardTileTo = Chessboard.GetTile(move.To).GetComponent<BoardTile>();
+            pieceToMove.transform.parent = boardTileTo.transform;
+            pieceToMove.transform.position = boardTileTo.transform.position;
+        }
+    }
+
+    private void OnMouseDown()
+    {
+        if (Chessboard.SelectPromotionPieceW.gameObject.activeSelf)
+            return;
+        Chessboard.RemoveThreatMap();
+        switch (Chessboard.Game.PlayerToMove)
+        {
+            case PieceColor.WHITE:
+                //if (Chessboard.IsPlayerWhiteHuman)
+                    HumanMove();
+                break;
+            case PieceColor.BLACK:
+                //if (Chessboard.IsPlayerBlackHuman)
+                    HumanMove();
+                break;
         }
     }
 
@@ -73,7 +160,7 @@ public class BoardTile : MonoBehaviour
     {
         yield return new WaitWhile(() => Chessboard.SelectPromotionPieceW.PieceType == PieceType.NONE);
         Chessboard.SelectPromotionPieceW.gameObject.SetActive(false);
-        Debug.Log("Piece selected: " + Chessboard.SelectPromotionPieceW.PieceType);
+        Debug.Log("Promotion piece selected: " + Chessboard.SelectPromotionPieceW.PieceType);
         ContinueMove(clickedSquare, pieceToMove);
     }
 
@@ -127,6 +214,15 @@ public class BoardTile : MonoBehaviour
         if (Chessboard.Game.State != GameState.INPROGRESS)
             Debug.Log(Chessboard.Game.State);
         DestroySelectedAndValidSquares();
+        //switch (Chessboard.Game.PlayerToMove)
+        //{
+        //    case PieceColor.WHITE:
+        //        if (!Chessboard.IsPlayerWhiteHuman) EngineMove();
+        //        break;
+        //    case PieceColor.BLACK:
+        //        if (!Chessboard.IsPlayerBlackHuman) EngineMove();
+        //        break;
+        //}
     }
 
     private void MovePiece(BoardTile clickedSquare)

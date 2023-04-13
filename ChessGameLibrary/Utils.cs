@@ -1,4 +1,5 @@
 ﻿using ChessGameLibrary.Enums;
+using System.Collections.Generic;
 
 namespace ChessGameLibrary
 {
@@ -8,6 +9,17 @@ namespace ChessGameLibrary
         public static int NO_RANKS { get; } = 8;
         public static string STARTING_FEN { get; } = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         public static int HALFMOVE_CLOCK_LIMIT { get; } = 50;
+
+        public static PieceType[] PromotionPieceTypes { get; } =
+        {
+            PieceType.KNIGHT, PieceType.BISHOP, PieceType.ROOK, PieceType.QUEEN
+        };
+
+        public static List<char> PieceLetters = new List<char>()
+        {
+            'P', 'N', 'B', 'R', 'Q', 'K',
+            'p', 'n', 'b', 'r', 'q', 'k'
+        };
 
         public static int[] KnightMoveCoordsX { get; } = new int[]
         {
@@ -48,6 +60,37 @@ namespace ChessGameLibrary
                 (to.Equals(6, firstRank) || to.Equals(2, firstRank)))
                 return true;
             return false;
+        }
+
+        public static bool IsPromotionMove(Piece piece, SquareCoords to)
+        {
+            int lastPawnRank = piece.Color == PieceColor.WHITE ? 7 : 0;
+            return (piece.Type == PieceType.PAWN) && (to.Rank == lastPawnRank);
+        }
+
+        public static PieceType GetPieceTypeFromPieceLetter(char letter)
+        {
+            return letter switch
+            {
+                'p' => PieceType.PAWN,
+                'n' => PieceType.KNIGHT,
+                'b' => PieceType.BISHOP,
+                'r' => PieceType.ROOK,
+                'q' => PieceType.QUEEN,
+                'k' => PieceType.KING,
+                'P' => PieceType.PAWN,
+                'N' => PieceType.KNIGHT,
+                'B' => PieceType.BISHOP,
+                'R' => PieceType.ROOK,
+                'Q' => PieceType.QUEEN,
+                'K' => PieceType.KING,
+                _ => PieceType.NONE
+            };
+        }
+
+        public static PieceColor GetPieceColorFromPieceLetter(char letter)
+        {
+            return char.IsLower(letter) ? PieceColor.BLACK : PieceColor.WHITE;
         }
     }
 }

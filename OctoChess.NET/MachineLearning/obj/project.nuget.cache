@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "javf+9E1sr1EuUtGa2w7+YP/W/zaRNKZPaWMlx2VUuaMLTPduThla5ppEqifTcbVwL0eMbEVIgJBO6Qyql/dIw==",
+  "success": true,
+  "projectFilePath": "C:\\facultate\\BachelorThesis-ChessAI\\OctoChess.NET\\MachineLearning\\MachineLearning.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\edyed\\.nuget\\packages\\keras.net\\3.8.5\\keras.net.3.8.5.nupkg.sha512",
+    "C:\\Users\\edyed\\.nuget\\packages\\microsoft.csharp\\4.5.0\\microsoft.csharp.4.5.0.nupkg.sha512",
+    "C:\\Users\\edyed\\.nuget\\packages\\numpy.bare\\3.8.1.25\\numpy.bare.3.8.1.25.nupkg.sha512",
+    "C:\\Users\\edyed\\.nuget\\packages\\pythonnet_netstandard_py38_win\\2.5.1\\pythonnet_netstandard_py38_win.2.5.1.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using ChessGameLibrary.Enums;
 
 namespace ChessGameLibrary
@@ -19,39 +20,32 @@ namespace ChessGameLibrary
         public bool BlackCanCastleQueen;
         public int HalfmoveClock;
         public int NoMoves;
+        public Dictionary<string, int> Positions = new Dictionary<string, int>();
+        public bool IsOver { get { return State != GameState.INPROGRESS; } }
+        public bool IsDraw { get { return State == GameState.DRAW || State == GameState.STALEMATE; } }
+
+        public bool IsInitialized { get { return Board != null; } }
 
         public bool SetPositionFromFEN(string fen)
         {
+            Positions[""] = 0;
             Board = new Board();
             string[] fields = fen.Split(' ');
             int rank = 7, file = 0;
             foreach (char letter in fields[0])
             {
-                switch (letter)
+                if (Utils.PieceLetters.Contains(letter))
+                    AddPieceToBoard(Utils.GetPieceTypeFromPieceLetter(letter),
+                        Utils.GetPieceColorFromPieceLetter(letter), file, rank);
+                else if (letter == '/')
                 {
-                    case 'p': AddPieceToBoard(PieceType.PAWN, PieceColor.BLACK, file, rank); break;
-                    case 'n': AddPieceToBoard(PieceType.KNIGHT, PieceColor.BLACK, file, rank); break;
-                    case 'b': AddPieceToBoard(PieceType.BISHOP, PieceColor.BLACK, file, rank); break;
-                    case 'r': AddPieceToBoard(PieceType.ROOK, PieceColor.BLACK, file, rank); break;
-                    case 'q': AddPieceToBoard(PieceType.QUEEN, PieceColor.BLACK, file, rank); break;
-                    case 'k': AddPieceToBoard(PieceType.KING, PieceColor.BLACK, file, rank); break;
-                    case 'P': AddPieceToBoard(PieceType.PAWN, PieceColor.WHITE, file, rank); break;
-                    case 'N': AddPieceToBoard(PieceType.KNIGHT, PieceColor.WHITE, file, rank); break;
-                    case 'B': AddPieceToBoard(PieceType.BISHOP, PieceColor.WHITE, file, rank); break;
-                    case 'R': AddPieceToBoard(PieceType.ROOK, PieceColor.WHITE, file, rank); break;
-                    case 'Q': AddPieceToBoard(PieceType.QUEEN, PieceColor.WHITE, file, rank); break;
-                    case 'K': AddPieceToBoard(PieceType.KING, PieceColor.WHITE, file, rank); break;
-                    case '/': rank--; file = -1; break;
-                    case '1': break;
-                    case '2': file += 1; break;
-                    case '3': file += 2; break;
-                    case '4': file += 3; break;
-                    case '5': file += 4; break;
-                    case '6': file += 5; break;
-                    case '7': file += 6; break;
-                    case '8': file += 7; break;
-                    default: return false;
+                    rank--;
+                    file = -1;
                 }
+                else if (letter >= '1' && letter <= '8')
+                    file += int.Parse(letter.ToString()) - 1;
+                else
+                    return false;
                 file++;
             }
 
@@ -76,8 +70,86 @@ namespace ChessGameLibrary
             State = GameState.INPROGRESS;
             UpdateThreatMap();
             RefreshLegalMoves();
-            CheckGameState();
+            string positionString = GetPositionFENString();
+            Positions[positionString] = 1;
+            CheckGameState(positionString);
             return true;
+        }
+
+        private string GetBoardFENPieces()
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int rank = 7; rank >= 0; rank--)
+            {
+                int i = 0;
+                for (int file = 0; file < 8; file++)
+                {
+                    Square sq = Board.Squares[file, rank];
+                    if (sq.Piece == null)
+                        i++;
+                    else
+                    {
+                        if (i > 0)
+                            sb.Append(i);
+                        i = 0;
+                        sb.Append(sq.Piece.ToString());
+                    }
+                }
+                if (i > 0)
+                    sb.Append(i);
+                if (rank > 0)
+                    sb.Append('/');
+            }
+            return sb.ToString();
+        }
+
+        private string GetBoardFENCastleRights()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            if (WhiteCanCastleKing)
+                sb.Append('K');
+            if (WhiteCanCastleQueen)
+                sb.Append('Q');
+            if (BlackCanCastleKing)
+                sb.Append('k');
+            if (BlackCanCastleQueen)
+                sb.Append('q');
+            if (sb.Length == 0)
+                return "-";
+            return sb.ToString();
+        }
+
+        public string GetBoardFEN()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(GetBoardFENPieces())
+                .Append(' ')
+                .Append(PlayerToMove.ToString().ToLower()[0])
+                .Append(' ')
+                .Append(GetBoardFENCastleRights())
+                .Append(' ');
+
+            if (EnPassantSquare != null)
+                sb.Append(EnPassantSquare.ToString());
+            else
+                sb.Append('-');
+            sb.Append(' ');
+
+            sb.Append(HalfmoveClock)
+                .Append(' ')
+                .Append(NoMoves);
+
+            return sb.ToString();
+        }
+
+        private string GetPositionFENString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(GetBoardFENPieces())
+                .Append(PlayerToMove.ToString().ToLower()[0])
+                .Append(GetBoardFENCastleRights());
+            return sb.ToString();
         }
 
         public void RefreshLegalMoves()
@@ -87,8 +159,19 @@ namespace ChessGameLibrary
             {
                 if (from.Piece == null || from.Piece.Color != PlayerToMove)
                     continue;
-                LegalMoves.AddRange(MoveSquares(from.SquareCoords)
-                    .Select(to => new SimpleMove(from.SquareCoords, to)));
+                List<SquareCoords> moveSquares = MoveSquares(from.SquareCoords);
+                foreach (SquareCoords to in moveSquares)
+                {
+                    Piece capturedPiece = Board.GetSquare(to).Piece;
+                    PieceType capturedPieceType = PieceType.NONE;
+                    if (capturedPiece != null)
+                        capturedPieceType = capturedPiece.Type;
+                    if (Utils.IsPromotionMove(from.Piece, to))
+                        foreach (PieceType type in Utils.PromotionPieceTypes)
+                            LegalMoves.Add(new SimpleMove(from.SquareCoords, to, type, capturedPieceType));
+                    else
+                        LegalMoves.Add(new SimpleMove(from.SquareCoords, to, pieceCaptured: capturedPieceType));
+                }
             }
         }
 
@@ -96,12 +179,19 @@ namespace ChessGameLibrary
         {
             MoveInfo moveToUndo = MovesHistory.Last();
             MovesHistory.Remove(moveToUndo);
+            State = GameState.INPROGRESS;
             SquareCoords from = moveToUndo.From, to = moveToUndo.To;
             Board.Squares[from.File, from.Rank].Piece = moveToUndo.Piece;
+            if (moveToUndo.PromotedTo != PieceType.NONE)
+                Board.Squares[from.File, from.Rank].Piece.Type = PieceType.PAWN;
             Board.Squares[to.File, to.Rank].Piece = null;
-            if (moveToUndo.CapturedPiece != null)
+            if (moveToUndo.MoveType == MoveType.ENPASSANT) // if en passant move, put the captured pawn back
+            {
+                int direction = moveToUndo.Piece.Color == PieceColor.WHITE ? 1 : -1;
+                Board.Squares[to.File, to.Rank - direction].Piece = moveToUndo.CapturedPiece;
+            }
+            else if (moveToUndo.CapturedPiece != null)
                 Board.Squares[to.File, to.Rank].Piece = moveToUndo.CapturedPiece;
-
             if (moveToUndo.MoveType == MoveType.CASTLE) // if castle move, also move the rook back
             {
                 SimpleMove rookMove = Utils.GetRookCastleMove(to);
@@ -119,7 +209,8 @@ namespace ChessGameLibrary
             UpdateThreatMap();
         }
 
-        public MoveInfo Move(SquareCoords from, SquareCoords to, PieceType promotedTo = PieceType.NONE, bool justCheck = false)
+        public MoveInfo Move(SquareCoords from, SquareCoords to, PieceType promotedTo = PieceType.QUEEN,
+            bool justCheck = false, bool fiftyMovesRule = true)
         {
             Square fromSq = Board.Squares[from.File, from.Rank];
             Piece piece = fromSq.Piece;
@@ -154,11 +245,11 @@ namespace ChessGameLibrary
                 moveInfo.MoveType = MoveType.CASTLE;
             }
 
-            int lastPawnRank = piece.Color == PieceColor.WHITE ? 7 : 0;
             int direction = piece.Color == PieceColor.WHITE ? 1 : -1;
             if (piece.Type == PieceType.PAWN && to.Equals(EnPassantSquare))
             {
                 moveInfo.MoveType = MoveType.ENPASSANT;
+                moveInfo.CapturedPiece = Board.Squares[to.File, to.Rank - direction].Piece;
                 Board.Squares[to.File, to.Rank - direction].Piece = null;
             }
             EnPassantSquare = null;
@@ -168,7 +259,7 @@ namespace ChessGameLibrary
                 moveInfo.CapturedPiece = new Piece(toSq.Piece.Type, toSq.Piece.Color);
             toSq.Piece = piece;
             fromSq.Piece = null;
-            if ((piece.Type == PieceType.PAWN) && (to.Rank == lastPawnRank))
+            if (Utils.IsPromotionMove(piece, to))
             {
                 moveInfo.MoveType = MoveType.PROMOTION;
                 moveInfo.PromotedTo = promotedTo;
@@ -182,14 +273,22 @@ namespace ChessGameLibrary
                 HalfmoveClock++;
             NoMoves++;
             UpdateThreatMap();
-            if (HalfmoveClock == Utils.HALFMOVE_CLOCK_LIMIT)
+            if (fiftyMovesRule && HalfmoveClock == Utils.HALFMOVE_CLOCK_LIMIT)
             {
                 State = GameState.DRAW;
                 return moveInfo;
             }
+            string positionString = "";
             if (!justCheck)
+            {
+                positionString = GetPositionFENString();
+                if (Positions.ContainsKey(positionString))
+                    Positions[positionString]++;
+                else
+                    Positions[positionString] = 1;
                 RefreshLegalMoves();
-            CheckGameState();
+            }
+            CheckGameState(positionString);
             return moveInfo;
         }
 
@@ -220,7 +319,7 @@ namespace ChessGameLibrary
             }
         }
 
-        private void CheckGameState()
+        private void CheckGameState(string positionString)
         {
             PieceColor otherPlayer = PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
             if (LegalMoves.Count == 0)
@@ -233,6 +332,8 @@ namespace ChessGameLibrary
                 else
                     State = GameState.STALEMATE;
             }
+            else if (Positions[positionString] >= 3)
+                State = GameState.DRAW;
             else
                 State = GameState.INPROGRESS;
         }
@@ -413,8 +514,9 @@ namespace ChessGameLibrary
                     if (WhiteCanCastleQueen)
                     {
                         if (!Board.Squares[4, 0].IsAttackedByBlack &&
+                            IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 3, 0) &&
                             IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 2, 0) &&
-                            IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 3, 0))
+                            IsSquareEmpty(1, 0))
                             squares.Add(new SquareCoords(2, 0));
                     }
                     break;
@@ -429,8 +531,9 @@ namespace ChessGameLibrary
                     if (BlackCanCastleQueen)
                     {
                         if (!Board.Squares[4, 7].IsAttackedByWhite &&
+                            IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 3, 7) &&
                             IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 2, 7) &&
-                            IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 3, 7))
+                            IsSquareEmpty(1, 7))
                             squares.Add(new SquareCoords(2, 7));
                     }
                     break;
@@ -639,14 +742,14 @@ namespace ChessGameLibrary
             return pieceColor == PieceColor.WHITE ? !sq.IsAttackedByWhite : !sq.IsAttackedByBlack;
         }
 
-        private bool IsEmptySquare(int file, int rank)
+        private bool IsSquareEmpty(int file, int rank)
         {
             return Board.Squares[file, rank].Piece == null;
         }
 
         private bool IsEnemyPieceOnSquare(PieceColor pieceColor, int file, int rank)
         {
-            if (IsEmptySquare(file, rank))
+            if (IsSquareEmpty(file, rank))
                 return false;
             return Board.Squares[file, rank].Piece.Color != pieceColor;
         }
