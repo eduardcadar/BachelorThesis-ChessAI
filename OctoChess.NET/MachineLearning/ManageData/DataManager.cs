@@ -5,8 +5,78 @@ using static MachineLearning.ManageData.DataUtils;
 
 namespace MachineLearning.ManageData
 {
-    public class DataManager
+    public static class DataManager
     {
+        private static readonly int CHECKMATE_POINTS = 318;
+
+        public static PositionsEvals GetPositionsEvalsFromFolder(
+            string folder,
+            PositionsFileType type = PositionsFileType.CHESSDATA
+        )
+        {
+            PositionsEvals pe = new();
+            string fileContains = "chessData";
+            switch (type)
+            {
+                case PositionsFileType.CHESSDATA:
+                    fileContains = "chessData";
+                    break;
+                case PositionsFileType.RANDOM_EVALS:
+                    fileContains = "random_evals";
+                    break;
+                case PositionsFileType.TACTIC_EVALS:
+                    fileContains = "tactic_evals";
+                    break;
+            }
+            foreach (string file in Directory.GetFiles(folder).Where(f => f.Contains(fileContains)))
+                pe.Add(
+                    GetPositionsEvalsFromFile(
+                        file,
+                        containsBestMove: type == PositionsFileType.TACTIC_EVALS
+                    )
+                );
+            return pe;
+        }
+
+        public static PositionsEvals GetPositionsEvalsFromFile(
+            string fileName,
+            bool containsBestMove = false
+        )
+        {
+            Console.WriteLine("file: " + fileName);
+            Game game = new();
+            List<float[]> positions = new();
+            List<float> evals = new();
+            string[] lines = File.ReadAllLines(fileName)[1..];
+            foreach (string line in lines)
+            {
+                string[] values = line.Split(',');
+                string fen = values[0];
+                string eval = values[1];
+
+                game.SetPositionFromFEN(fen);
+                string repr = GamePositionToDataString(game);
+                float[] position = EncodedPositionStringToFloatArray(repr);
+
+                float evalPoints;
+                if (eval.Contains('#'))
+                    evalPoints = CHECKMATE_POINTS * (eval.Contains('-') ? -1 : 1);
+                else
+                    evalPoints = int.Parse(eval);
+
+                positions.Add(position);
+                evals.Add(evalPoints / 100);
+
+                if (evals.Count > 10000) // REMOVE AFTER TESTING //////////////////////////////////////////
+                    break;
+            }
+
+            return new PositionsEvals(CreateRectangularArray(positions), evals.ToArray());
+        }
+
+        public static float[] EncodedPositionStringToFloatArray(string position) =>
+            position.Split(',').Select(float.Parse).ToArray();
+
         public static FilePositions GetTrainPositionsFromFolder(string folder)
         {
             FilePositions fp = new();
@@ -22,25 +92,24 @@ namespace MachineLearning.ManageData
             string[] lines = File.ReadAllLines(fileName)[1..];
             foreach (string line in lines)
             {
-                var f = line.Split(',')
-                    .Select(nr => float.Parse(nr))
-                    .ToArray();
+                var f = EncodedPositionStringToFloatArray(line);
                 results.Add(f[^1]);
                 positions.Add(f[..^1]);
             }
-            return new FilePositions(
-                CreateRectangularArray(positions), results.ToArray());
+            return new FilePositions(CreateRectangularArray(positions), results.ToArray());
         }
 
-        public void WritePGNGameToFile(string fileName, PGNGame pgnGame)
+        //
+        public static void WritePGNGameToFile(string fileName, PGNGame pgnGame)
         {
             string toWrite = GetPositionsStringFromPGNGame(pgnGame);
             if (!File.Exists(fileName))
-                File.AppendAllText(fileName, DataUtils.HEADER + Environment.NewLine);
+                File.AppendAllText(fileName, HEADER + Environment.NewLine);
             File.AppendAllText(fileName, toWrite);
         }
 
-        public string GetPositionsStringFromPGNGame(PGNGame pgnGame)
+        //
+        public static string GetPositionsStringFromPGNGame(PGNGame pgnGame)
         {
             StringBuilder sb = new();
             Game game = new();
@@ -48,15 +117,13 @@ namespace MachineLearning.ManageData
 
             foreach (PGNMove move in pgnGame.Moves)
             {
-                string positionEncoding = GamePositionToString(game);
-                string result = "0.5";
+                string positionEncoding = GamePositionToDataString(game);
+                string result = "0";
                 if (pgnGame.GameResult == GameResult.WHITE)
                     result = "1";
                 else if (pgnGame.GameResult == GameResult.BLACK)
-                    result = "0";
-                sb.Append(positionEncoding)
-                    .Append(',')
-                    .AppendLine(result);
+                    result = "-1";
+                sb.Append(positionEncoding).Append(',').AppendLine(result);
 
                 game.Move(move.From, move.To, move.PromotedTo, fiftyMovesRule: false);
             }
@@ -64,14 +131,14 @@ namespace MachineLearning.ManageData
             return sb.ToString();
         }
 
-        public string GamePositionToString(Game game)
+        // Takes position from game and turns it into encoded string
+        public static string GamePositionToDataString(Game game)
         {
             StringBuilder sb = new();
 
             foreach (Square square in game.Board.Squares)
             {
-                sb.Append(DataUtils.EncodePiece(square.Piece))
-                    .Append(',');
+                sb.Append(EncodePiece(square.Piece)).Append(',');
             }
 
             if (game.WhiteCanCastleKing)
@@ -94,8 +161,7 @@ namespace MachineLearning.ManageData
             if (game.EnPassantSquare == null)
                 sb.Append("-1,");
             else
-                sb.Append(game.EnPassantSquare.File)
-                    .Append(',');
+                sb.Append(game.EnPassantSquare.File).Append(',');
 
             if (game.PlayerToMove == ChessGameLibrary.Enums.PieceColor.WHITE)
                 sb.Append('0');
