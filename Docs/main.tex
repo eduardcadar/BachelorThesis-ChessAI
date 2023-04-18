@@ -9,6 +9,8 @@
 %in style
 %controlling the appearance of your headers and footers
 \usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{subcaption}
 \pagestyle{fancy}
 \lhead{}
 \chead{}
@@ -44,11 +46,12 @@ ABSTRACT
 
 The usual way of searching for a move from a chess position is through tactics or strategy. Tactics are series of moves that would bring an immediate advantage, while strategy refers to a general 'sense' of advantage on the board, without too much calculation (having better developed pieces, better pawn structure etc.).\cite{klein2022neural}
 
-Chess engines are usually built using a minimax algorithm. This approach is able to find the moves that would bring material gain (capturing pieces) in a given depth, but cannot find moves that would slowly improve the position. A neural network trained on professional chess games is able to find good positional moves, but may be weak at finding tactical moves.
+Chess engines are usually built using a minimax algorithm, along with an evaluation function that takes into consideration the positions of the pieces on the board. This approach is able to find the moves that would bring material gain (capturing pieces) in a given depth, but cannot find moves that would slowly improve the position. Another approach would be training a neural network on professional chess games, which would be able to find good positional moves, but may be weak at finding tactical moves.
 
 An algorithm combining these two approaches should yield better results than each of them on their own.
+%First chapter introduction? maybe can remove it and first chapter is the background?
 
-Abstract: un rezumat \^{i}n limba englez\u{a} cu prezentarea, pe scurt, a con\c{t}inutului pe capitole, pun\^{a}nd accent pe contribu\c{t}iile proprii \c{s}i originalitate
+In the second chapter I will go over some of the techniques and algorithms used in programming chess engines, as well as some of the programming methods that modern chess engines utilize. In the third chapter I will describe the methods and algorithms I used in building my chess engine, and in the fourth chapter I will describe the tools and technologies with which I built the game and the engine.
 
 \tableofcontents
 
@@ -64,7 +67,8 @@ Abstract: un rezumat \^{i}n limba englez\u{a} cu prezentarea, pe scurt, a con\c{
 \input{chapters/chapter4}
 \input{chapters/chapter5}
 
-\input{chapters/chapter6_conclusions}
+\input{chapters/chapter6}
+\input{chapters/chapter7_conclusions}
 %\addcontentsline{toc}{chapter}{Concluzii}
 %\addcontentsline{toc}{chapter}{Conclusions}
 

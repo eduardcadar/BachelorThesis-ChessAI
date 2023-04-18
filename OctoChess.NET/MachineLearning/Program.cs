@@ -1,10 +1,7 @@
 ﻿using MachineLearning;
 using MachineLearning.ManageData;
 
-string gamesDirectory = @"../../../Games/";
-string player = "data";
-
-string dataFile = $"{DataUtils.DataDirectory}{player}.csv";
+string player = "player";
 
 //DataManager.GetPositionsFromFile(dataFile);
 
@@ -15,35 +12,46 @@ string dataFile = $"{DataUtils.DataDirectory}{player}.csv";
 //    DataUtils.PositionsEvalsDirectory,
 //    type: PositionsFileType.RANDOM_EVALS
 //);
-MachineLearningTrain trainer = new();
-FilePositions fp = DataManager.GetTrainPositionsFromFolder(DataUtils.DataDirectory);
-trainer.Train(fp.Positions, fp.Results);
 
 // PGN FILE -> PGN GAMES -> ENCODE POSITIONS -> ENCODED POSITIONS FILE -> TRAIN MODEL ON ENCODED POSITIONS
 // THEN TEST MODEL ON POSITIONS EVALS
 
 // GET PGN GAMES FROM PGN FILE
-//IEnumerable<PGNGame> games = PGNParser.ParsePGNFile(gamesDirectory + $"{player}.pgn");
+//string pgnGamesFile = $"{DataUtils.PgnGamesDirectory}{player}_games.pgn";
+//IEnumerable<PGNGame> pgnGames = PGNParser.ParsePGNFile(pgnGamesFile);
 
 // WRITE PGN GAME TO ENCODED POSITIONS FILE
-//dataManager.WritePGNGameToFile(dataFile, pgnGame);
+//string encodedPositionsFile = $"{DataUtils.DataDirectory}{player}.csv";
+//foreach (var pgnGame in pgnGames)
+//    DataManager.WritePGNGameToFile(encodedPositionsFile, pgnGame);
 
 // TRAIN MODEL
 //
-//MachineLearningTrain trainer = new();
-//FilePositions fp = DataManager.GetTrainPositionsFromFolder(dataDirectory);
-//trainer.Train(fp.Positions, fp.Results);
+MachineLearningModel model = new();
+
+//FilePositions fp = DataManager.GetTrainPositionsFromFolder(DataUtils.DataDirectory);
+
+// FOR SAME POSITION MAKE A MEAN OF THE RESULTS (LOSSES+WINS+DRAWS)
+//FilePositions fp = DataManager.GetMeanOfPositionResults(DataUtils.DataDirectory);
+
+model.LoadModel();
+
+//model.InitializeModel();
+//model.Train(fp.Positions, fp.Results, batch_size: 32, epochs: 100, validation_split: 0.3f);
 
 // SAVE MODEL
 //
-
+//model.SaveModel();
 
 // GET POSITIONS EVALS (for testing model) from folder
 //
-//var positionEvals = DataManager.GetPositionsEvalsFromFolder(
-//    positionsEvalsDirectory,
-//    type: PositionsFileType.RANDOM_EVALS
-//);
+var positionEvals = DataManager.GetPositionsEvalsFromFolder(
+    DataUtils.PositionsEvalsDirectory,
+    type: PositionsFileType.CHESSDATA
+);
+positionEvals.Evals = positionEvals.Evals.Select(e => (float)Math.Tanh(e)).ToArray();
 
 // TEST MODEL
 //
+model.LoadModel();
+model.Evaluate(positionEvals.Positions, positionEvals.Evals);

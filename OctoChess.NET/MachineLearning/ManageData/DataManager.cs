@@ -9,6 +9,32 @@ namespace MachineLearning.ManageData
     {
         private static readonly int CHECKMATE_POINTS = 318;
 
+        public static FilePositions GetMeanOfPositionResults(string folder)
+        {
+            Dictionary<string, List<float>> positionsResults = new();
+            foreach (string file in Directory.GetFiles(folder))
+            {
+                string[] lines = File.ReadAllLines(file)[1..];
+                foreach (string line in lines)
+                {
+                    string[] split = line.Split(',');
+                    float result = float.Parse(split[^1]);
+                    string position = line[..^(split[^1].Length + 1)];
+                    if (!positionsResults.ContainsKey(position))
+                        positionsResults.Add(position, new());
+                    positionsResults[position].Add(result);
+                }
+            }
+            List<float[]> positions = new();
+            List<float> values = new();
+            foreach (var key in positionsResults.Keys)
+            {
+                positions.Add(EncodedPositionStringToFloatArray(key));
+                values.Add(positionsResults[key].Average());
+            }
+            return new(CreateRectangularArray(positions), values.ToArray());
+        }
+
         public static PositionsEvals GetPositionsEvalsFromFolder(
             string folder,
             PositionsFileType type = PositionsFileType.CHESSDATA
@@ -67,7 +93,7 @@ namespace MachineLearning.ManageData
                 positions.Add(position);
                 evals.Add(evalPoints / 100);
 
-                if (evals.Count > 10000) // REMOVE AFTER TESTING //////////////////////////////////////////
+                if (evals.Count > 1000) // REMOVE AFTER TESTING //////////////////////////////////////////
                     break;
             }
 
@@ -87,6 +113,7 @@ namespace MachineLearning.ManageData
 
         public static FilePositions GetPositionsFromFile(string fileName)
         {
+            Console.WriteLine("positions from: " + fileName);
             List<float[]> positions = new();
             List<float> results = new();
             string[] lines = File.ReadAllLines(fileName)[1..];

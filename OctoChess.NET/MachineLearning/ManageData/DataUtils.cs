@@ -4,10 +4,17 @@ namespace MachineLearning.ManageData
 {
     public static class DataUtils
     {
-        public static string GamesDirectory { get; } = @"../../../PgnGames/";
+        public static string PgnGamesDirectory { get; } = @"../../../PgnGames/";
         public static string DataDirectory { get; } = @"../../../EncodedPositions/";
         public static string PositionsEvalsDirectory { get; } = @"../../../PositionsEvals/";
-        public static string ModelsDirectory { get; } = @"../../../../NeuralNetowrkModels/";
+        public static string ModelsDirectory { get; } = @"../../../../NeuralNetworkModels/";
+
+        public static float[,] GamePositionToFloatPositions(Game game)
+        {
+            string positionEncoding = DataManager.GamePositionToDataString(game);
+            float[] floatArray = DataManager.EncodedPositionStringToFloatArray(positionEncoding);
+            return CreateRectangularArray(new List<float[]>() { floatArray });
+        }
 
         public static T[,] ConcatArrays<T>(T[,] a, T[,] b)
         {

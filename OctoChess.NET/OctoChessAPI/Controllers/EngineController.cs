@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OctoChessAPI.DTO;
+using OctoChessEngine;
 using OctoChessEngine.Domain;
-using OctoChessEngine.Engines;
+using OctoChessEngine.Enums;
 
 namespace OctoChessAPI.Controllers
 {
@@ -13,10 +14,19 @@ namespace OctoChessAPI.Controllers
 
         [Route("bestMove/{fen}")]
         [HttpGet]
-        public async Task<ActionResult<MoveEvalDTO>> GetBestMove(string fen, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<MoveEvalDTO>> GetBestMove(
+            string fen,
+            EvaluationType evaluationType = EvaluationType.MATERIAL,
+            CancellationToken cancellationToken = default
+        )
         {
             _octoChess.SetFenPosition(fen);
-            MoveEval bestMove = await _octoChess.BestMove(depth: 3, alphaBetaPruning: true, cancellationToken: cancellationToken);
+            MoveEval bestMove = await _octoChess.BestMove(
+                depth: 3,
+                useAlphaBetaPruning: true,
+                cancellationToken: cancellationToken,
+                evaluationType: evaluationType
+            );
             MoveEvalDTO moveEvalDTO = new(bestMove);
             return Ok(moveEvalDTO);
         }
