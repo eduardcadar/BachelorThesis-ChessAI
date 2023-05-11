@@ -12,8 +12,13 @@ namespace OctoChessEngine.Domain
         public double Evaluation { get; set; }
         public int MoveNumber { get; set; }
 
-        public MoveEval(SquareCoords from, SquareCoords to,
-            double evaluation, int moveNumber, PieceType promotedTo = PieceType.NONE)
+        public MoveEval(
+            SquareCoords from,
+            SquareCoords to,
+            double evaluation,
+            int moveNumber,
+            PieceType promotedTo = PieceType.NONE
+        )
         {
             From = from;
             To = to;
@@ -30,19 +35,15 @@ namespace OctoChessEngine.Domain
         public override string ToString()
         {
             StringBuilder sb = new();
-            sb.Append("Move ")
-                .Append(MoveNumber)
-                .Append(' ')
-                .Append(From)
-                .Append('-')
-                .Append(To);
+            sb.Append("Move ").Append(MoveNumber).Append(' ').Append(From).Append('-').Append(To);
             if (PromotedTo != PieceType.NONE)
                 sb.Append(PromotedTo);
             if (Evaluation == EngineUtils.CHECKMATE_VALUE)
-                sb.Append(" FORCED_MATE");
+                sb.Append(" WHITE FORCED_MATE");
+            else if (Evaluation == EngineUtils.CHECKMATE_VALUE * (-1))
+                sb.Append(" BLACK FORCED MATE");
             else
-                sb.Append(' ')
-                    .Append(Evaluation / 100);
+                sb.Append(' ').Append(Evaluation / 100);
             return sb.ToString();
         }
     }

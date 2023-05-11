@@ -4,10 +4,14 @@ namespace MachineLearning.ManageData
 {
     public static class DataUtils
     {
-        public static string PgnGamesDirectory { get; } = @"../../../PgnGames/";
-        public static string DataDirectory { get; } = @"../../../EncodedPositions/";
-        public static string PositionsEvalsDirectory { get; } = @"../../../PositionsEvals/";
-        public static string ModelsDirectory { get; } = @"../../../../NeuralNetworkModels/";
+        public static string PgnGamesDirectory { get; } =
+            @"C:\facultate\BachelorThesis-ChessAI\OctoChess.NET\MachineLearning\PgnGames\new\";
+        public static string DataDirectory { get; } =
+            @"C:\facultate\BachelorThesis-ChessAI\OctoChess.NET\MachineLearning\EncodedPositions\";
+        public static string PositionsEvalsDirectory { get; } =
+            @"C:\facultate\BachelorThesis-ChessAI\OctoChess.NET\MachineLearning\PositionsEvals\";
+        public static string ModelsDirectory { get; } =
+            @"C:\facultate\BachelorThesis-ChessAI\OctoChess.NET\NeuralNetworkModels\";
 
         public static float[,] GamePositionToFloatPositions(Game game)
         {

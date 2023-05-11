@@ -7,29 +7,32 @@ namespace ChessGameLibrary
     {
         public static int NO_FILES { get; } = 8;
         public static int NO_RANKS { get; } = 8;
-        public static string STARTING_FEN { get; } = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        public static string STARTING_FEN { get; } =
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         public static int HALFMOVE_CLOCK_LIMIT { get; } = 50;
 
         public static PieceType[] PromotionPieceTypes { get; } =
-        {
-            PieceType.KNIGHT, PieceType.BISHOP, PieceType.ROOK, PieceType.QUEEN
-        };
+            { PieceType.KNIGHT, PieceType.BISHOP, PieceType.ROOK, PieceType.QUEEN };
 
         public static List<char> PieceLetters = new List<char>()
         {
-            'P', 'N', 'B', 'R', 'Q', 'K',
-            'p', 'n', 'b', 'r', 'q', 'k'
+            'P',
+            'N',
+            'B',
+            'R',
+            'Q',
+            'K',
+            'p',
+            'n',
+            'b',
+            'r',
+            'q',
+            'k'
         };
 
-        public static int[] KnightMoveCoordsX { get; } = new int[]
-        {
-            1, 2, 2, 1, -1, -2, -2, -1
-        };
+        public static int[] KnightMoveCoordsX { get; } = new int[] { 1, 2, 2, 1, -1, -2, -2, -1 };
 
-        public static int[] KnightMoveCoordsY { get; } = new int[]
-        {
-            2, 1, -1, -2, 2, 1, -1, -2
-        };
+        public static int[] KnightMoveCoordsY { get; } = new int[] { 2, 1, -1, -2, 2, 1, -1, -2 };
 
         public static SimpleMove GetRookCastleMove(SquareCoords kingSquare)
         {
@@ -56,8 +59,7 @@ namespace ChessGameLibrary
             if (piece.Type != PieceType.KING)
                 return false;
             int firstRank = piece.Color == PieceColor.WHITE ? 0 : 7;
-            if (from.Equals(4, firstRank) &&
-                (to.Equals(6, firstRank) || to.Equals(2, firstRank)))
+            if (from.Equals(4, firstRank) && (to.Equals(6, firstRank) || to.Equals(2, firstRank)))
                 return true;
             return false;
         }

@@ -4,6 +4,7 @@ using MachineLearning;
 using MachineLearning.ManageData;
 using OctoChessEngine.Domain;
 using OctoChessEngine.Enums;
+using System.Diagnostics;
 
 namespace OctoChessEngine
 {
@@ -11,12 +12,10 @@ namespace OctoChessEngine
     {
         private readonly Game _game;
         private readonly List<MoveEval> _moveEvals;
-        private GamePhase _gamePhase;
         private MachineLearningModel _model;
-        public List<SimpleMove> LegalMoves
-        {
-            get { return _game.LegalMoves; }
-        }
+        private Dictionary<string, double> _previousEvals;
+
+        private int _prunesCount = 0;
 
         public OctoChess()
         {
@@ -24,6 +23,7 @@ namespace OctoChessEngine
             _moveEvals = new();
             _model = new MachineLearningModel();
             _model.LoadModel();
+            _previousEvals = new();
         }
 
         public void SetFenPosition(string fen)
@@ -47,7 +47,7 @@ namespace OctoChessEngine
                     noPositions[1] += _game.LegalMoves.Count;
                     int noMoves = 0;
                     if (depth > 1)
-                        noMoves += NoPositionsRecursive(noPositions, 2, depth);
+                        noMoves += NumOfPositionsRecursive(noPositions, 2, depth);
                     if (depth == 1)
                         noMoves += _game.LegalMoves.Count;
                     Console.WriteLine($"{move}: {noMoves}");
@@ -58,7 +58,7 @@ namespace OctoChessEngine
             return noPositions;
         }
 
-        public int NoPositionsRecursive(int[] noPositions, int currentDepth, int depth)
+        public int NumOfPositionsRecursive(int[] noPositions, int currentDepth, int depth)
         {
             int noMoves = 0;
             SimpleMove[] moves = _game.LegalMoves.ToArray();
@@ -69,98 +69,310 @@ namespace OctoChessEngine
                 if (currentDepth == depth)
                     noMoves += _game.LegalMoves.Count;
                 if (currentDepth < depth)
-                    noMoves += NoPositionsRecursive(noPositions, currentDepth + 1, depth);
+                    noMoves += NumOfPositionsRecursive(noPositions, currentDepth + 1, depth);
                 _game.UndoMove();
             }
             return noMoves;
         }
 
         public async Task<MoveEval> BestMove(
-            int depth = 3,
+            int maxDepth = 3,
             bool useAlphaBetaPruning = true,
-            CancellationToken cancellationToken = default,
-            EvaluationType evaluationType = EvaluationType.MATERIAL
+            EvaluationType evaluationType = EvaluationType.MATERIAL,
+            bool useIterativeDeepening = true,
+            int timeLimit = 60,
+            bool useQuiescenceSearch = true,
+            int maxQuiescenceDepth = 5,
+            CancellationToken cancellationToken = default
         )
         {
             if (_game.IsOver)
                 throw new NotImplementedException("Game is over");
             if (!_game.IsInitialized)
                 throw new NotImplementedException("Board was not initialized");
-            if (depth <= 0)
+            if (maxDepth <= 0)
                 throw new NotImplementedException("Depth should be >0");
-            Game game = new();
-            game.SetPositionFromFEN(_game.GetBoardFEN());
+
+            if (useIterativeDeepening)
+                return await IterativeDeepening(
+                    maxDepth,
+                    useAlphaBetaPruning,
+                    evaluationType,
+                    timeLimit,
+                    useQuiescenceSearch,
+                    maxQuiescenceDepth
+                );
+
+            return await GetBestMove(
+                depth: maxDepth,
+                useAlphaBetaPruning: useAlphaBetaPruning,
+                evaluationType: evaluationType,
+                useQuiescenceSearch: useQuiescenceSearch,
+                maxQuiescenceDepth: maxQuiescenceDepth,
+                cancellationToken: cancellationToken
+            );
+        }
+
+        private bool IsQuiescentMove(SimpleMove move)
+        {
+            if (move.PromotedTo != PieceType.NONE)
+                return false;
+            if (move.PieceCaptured != PieceType.NONE && move.PieceCaptured != PieceType.PAWN)
+                return false;
+            return true;
+        }
+
+        private bool IsQuiescentPosition()
+        {
+            foreach (SimpleMove move in _game.LegalMoves)
+                if (!IsQuiescentMove(move))
+                    return false;
+            return true;
+        }
+
+        private async Task<MoveEval> IterativeDeepening(
+            int maxDepth,
+            bool useAlphaBetaPruning,
+            EvaluationType evaluationType,
+            int timeLimit,
+            bool useQuiescenceSearch,
+            int maxQuiescenceDepth
+        )
+        {
+            Stopwatch stopwatch = new();
+            SimpleMove firstMove = _game.LegalMoves[0];
+            MoveEval bestMove =
+                new(firstMove.From, firstMove.To, 0, _game.MovesCount, firstMove.PromotedTo);
+            TimeSpan maxTime = TimeSpan.FromSeconds(timeLimit);
+
+            for (int currentDepth = 1; currentDepth <= maxDepth; currentDepth++)
+            {
+                CancellationTokenSource source = new();
+                source.CancelAfter(maxTime.Subtract(stopwatch.Elapsed));
+
+                stopwatch.Start();
+                try
+                {
+                    bestMove = await GetBestMove(
+                        depth: currentDepth,
+                        useAlphaBetaPruning: useAlphaBetaPruning,
+                        evaluationType: evaluationType,
+                        useQuiescenceSearch: useQuiescenceSearch,
+                        maxQuiescenceDepth: maxQuiescenceDepth,
+                        cancellationToken: source.Token
+                    );
+                }
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine("Time elapsed");
+                }
+
+                stopwatch.Stop();
+                if (stopwatch.Elapsed > maxTime)
+                    break;
+            }
+            return bestMove;
+        }
+
+        private async Task<MoveEval> GetBestMove(
+            int depth,
+            bool useAlphaBetaPruning,
+            EvaluationType evaluationType,
+            bool useQuiescenceSearch,
+            int maxQuiescenceDepth,
+            CancellationToken cancellationToken
+        )
+        {
+            //Game game = new();
+            _game.SetPositionFromFEN(_game.GetBoardFEN());
             _moveEvals.Clear();
-            SimpleMove[] moves = _game.LegalMoves.OrderByDescending(a => a.PieceCaptured).ToArray();
+            SimpleMove[] moves = _game.LegalMoves
+                .OrderByDescending(a => a.PieceCaptured)
+                .ThenBy(a => _game.Board.GetSquare(a.From).Piece.Type)
+                .ToArray();
+            int i = 1,
+                l = moves.Length;
+            int initialDepth = depth;
             foreach (SimpleMove move in moves)
             {
-                game.Move(move.From, move.To, promotedTo: move.PromotedTo);
-                await Task.Run(
-                    () =>
-                        _moveEvals.Add(
-                            new MoveEval(
-                                move.From,
-                                move.To,
-                                MiniMax(
-                                    game,
-                                    game.PlayerToMove,
-                                    depth - 1,
-                                    useAlphaBetaPruning,
-                                    evaluationType: evaluationType
-                                ),
-                                moveNumber: game.NoMoves,
-                                promotedTo: move.PromotedTo
-                            )
+                _game.Move(move.From, move.To, promotedTo: move.PromotedTo);
+                _moveEvals.Add(
+                    new MoveEval(
+                        move.From,
+                        move.To,
+                        await MiniMax(
+                            _game.PlayerToMove,
+                            useAlphaBetaPruning,
+                            useQuiescenceSearch,
+                            maxQuiescenceDepth,
+                            evaluationType,
+                            initialDepth: initialDepth,
+                            depth: depth - 1,
+                            cancellationToken: cancellationToken
                         ),
-                    cancellationToken
+                        moveNumber: _game.MovesCount,
+                        promotedTo: move.PromotedTo
+                    )
                 );
-                game.UndoMove();
+
+                _game.UndoMove();
+                Console.WriteLine($"Move {i}/{l}");
+                i++;
             }
             foreach (MoveEval m in _moveEvals)
                 Console.WriteLine(m);
-            Console.WriteLine();
+            //Console.WriteLine();
+            //Console.WriteLine("Prunes: " + _prunesCount);
             return _game.PlayerToMove == PieceColor.WHITE ? _moveEvals.Max() : _moveEvals.Min();
         }
 
-        private double MiniMax(
-            Game game,
-            PieceColor maximizingPlayer,
-            int depth = 3,
-            bool useAlphaBetaPruning = true,
-            double alpha = double.MinValue,
-            double beta = double.MaxValue,
-            EvaluationType evaluationType = EvaluationType.MATERIAL
+        private double StaticEval(
+            int initialDepth,
+            int depth,
+            GamePhase gamePhase,
+            EvaluationType evaluationType
         )
         {
-            GamePhase gamePhase = EngineUtils.EvalGamePhase(game.Board, game.NoMoves);
-            if (depth <= 0 || game.IsOver)
-                return EvaluatePosition(game, gamePhase, evaluationType);
-            game.RefreshLegalMoves();
-            List<SimpleMove> moves = new(game.LegalMoves);
-            moves = moves.OrderByDescending(a => a.PieceCaptured).ToList();
+            string positionFen = _game.GetPositionFENString();
+            if (_previousEvals.TryGetValue(positionFen, out double value))
+                return value;
+            double eval = EvaluatePosition(initialDepth, depth, gamePhase, evaluationType);
+            _previousEvals[positionFen] = eval;
+            return eval;
+        }
+
+        private async Task<double> Quiesce(
+            int initialDepth,
+            int depth,
+            EvaluationType evaluationType,
+            int maxQuiescenceDepth,
+            double alpha,
+            double beta,
+            CancellationToken cancellationToken = default
+        )
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            GamePhase gamePhase = EngineUtils.EvalGamePhase(_game.Board, _game.MovesCount);
+            double stand_pat = StaticEval(initialDepth, depth, gamePhase, evaluationType);
+
+            if (maxQuiescenceDepth <= 0 || _game.IsOver)
+                return stand_pat;
+            if (_game.PlayerToMove == PieceColor.WHITE)
+                alpha = double.Max(alpha, stand_pat);
+            else
+                beta = double.Min(beta, stand_pat);
+            if (beta <= alpha)
+                return stand_pat;
+
+            List<SimpleMove> moves =
+                new(
+                    _game.LegalMoves
+                        .Where(m => !IsQuiescentMove(m))
+                        .OrderByDescending(a => a.PieceCaptured)
+                        .ThenBy(a => _game.Board.GetSquare(a.From).Piece.Type)
+                );
+
+            foreach (SimpleMove move in moves)
+            {
+                _game.Move(move.From, move.To, move.PromotedTo);
+                double eval = await Quiesce(
+                    initialDepth,
+                    depth,
+                    evaluationType,
+                    maxQuiescenceDepth - 1,
+                    alpha,
+                    beta,
+                    cancellationToken
+                );
+                _game.UndoMove();
+
+                if (_game.PlayerToMove == PieceColor.WHITE)
+                {
+                    stand_pat = double.Max(eval, stand_pat);
+                    alpha = double.Max(alpha, eval);
+                }
+                else
+                {
+                    stand_pat = double.Min(eval, stand_pat);
+                    beta = double.Min(beta, eval);
+                }
+                if (alpha >= beta)
+                    break;
+            }
+            return alpha;
+        }
+
+        private async Task<double> MiniMax(
+            PieceColor maximizingPlayer,
+            bool useAlphaBetaPruning,
+            bool useQuiescenceSearch,
+            int maxQuiescenceDepth,
+            EvaluationType evaluationType,
+            double alpha = double.MinValue,
+            double beta = double.MaxValue,
+            int initialDepth = 3,
+            int depth = 3,
+            CancellationToken cancellationToken = default
+        )
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            GamePhase gamePhase = EngineUtils.EvalGamePhase(_game.Board, _game.MovesCount);
+            if (_game.IsOver)
+                return StaticEval(initialDepth, depth, gamePhase, evaluationType);
+            if (depth <= 0)
+            {
+                if (!useQuiescenceSearch)
+                    return StaticEval(initialDepth, depth, gamePhase, evaluationType);
+                else
+                {
+                    if (!IsQuiescentPosition())
+                        return await Quiesce(
+                            initialDepth,
+                            depth,
+                            evaluationType,
+                            maxQuiescenceDepth,
+                            alpha,
+                            beta,
+                            cancellationToken
+                        );
+                    else
+                        return StaticEval(initialDepth, depth, gamePhase, evaluationType);
+                }
+            }
+            List<SimpleMove> moves = new(_game.LegalMoves);
+            moves = moves
+                .OrderByDescending(a => a.PieceCaptured)
+                .ThenBy(a => _game.Board.GetSquare(a.From).Piece.Type)
+                .ToList();
             switch (maximizingPlayer)
             {
                 case PieceColor.WHITE:
                     double maxEval = double.MinValue;
                     foreach (SimpleMove move in moves)
                     {
-                        game.Move(move.From, move.To, move.PromotedTo);
-                        double eval = MiniMax(
-                            game,
-                            PieceColor.BLACK,
+                        _game.Move(move.From, move.To, move.PromotedTo);
+                        double eval = await MiniMax(
+                            maximizingPlayer: PieceColor.BLACK,
+                            useAlphaBetaPruning: useAlphaBetaPruning,
+                            useQuiescenceSearch: useQuiescenceSearch,
+                            maxQuiescenceDepth: maxQuiescenceDepth,
+                            evaluationType: evaluationType,
+                            alpha: alpha,
+                            beta: beta,
+                            initialDepth: initialDepth,
                             depth: depth - 1,
-                            useAlphaBetaPruning,
-                            alpha,
-                            beta,
-                            evaluationType: evaluationType
+                            cancellationToken: cancellationToken
                         );
                         maxEval = double.Max(maxEval, eval);
-                        game.UndoMove();
+                        _game.UndoMove();
                         if (useAlphaBetaPruning)
                         {
                             alpha = double.Max(alpha, eval);
                             if (beta <= alpha)
+                            {
+                                _prunesCount++;
                                 break;
+                            }
                         }
                     }
                     return maxEval;
@@ -168,23 +380,29 @@ namespace OctoChessEngine
                     double minEval = double.MaxValue;
                     foreach (SimpleMove move in moves)
                     {
-                        game.Move(move.From, move.To, move.PromotedTo);
-                        double eval = MiniMax(
-                            game,
-                            PieceColor.WHITE,
+                        _game.Move(move.From, move.To, move.PromotedTo);
+                        double eval = await MiniMax(
+                            maximizingPlayer: PieceColor.WHITE,
+                            useAlphaBetaPruning: useAlphaBetaPruning,
+                            useQuiescenceSearch: useQuiescenceSearch,
+                            maxQuiescenceDepth: maxQuiescenceDepth,
+                            evaluationType: evaluationType,
+                            alpha: alpha,
+                            beta: beta,
+                            initialDepth: initialDepth,
                             depth: depth - 1,
-                            useAlphaBetaPruning,
-                            alpha,
-                            beta,
-                            evaluationType: evaluationType
+                            cancellationToken: cancellationToken
                         );
                         minEval = double.Min(minEval, eval);
-                        game.UndoMove();
+                        _game.UndoMove();
                         if (useAlphaBetaPruning)
                         {
                             beta = double.Min(beta, eval);
                             if (beta <= alpha)
+                            {
+                                _prunesCount++;
                                 break;
+                            }
                         }
                     }
                     return minEval;
@@ -194,30 +412,34 @@ namespace OctoChessEngine
         }
 
         public double EvaluatePosition(
-            Game game,
+            int initialDepth,
+            int depth,
             GamePhase gamePhase,
             EvaluationType type = EvaluationType.MATERIAL
         )
         {
-            if (game.IsOver)
+            if (_game.IsOver)
             {
-                if (game.IsDraw)
+                if (_game.IsDraw)
                     return 0;
-                int evaluationFactor = game.PlayerToMove == PieceColor.WHITE ? -1 : 1;
-                return evaluationFactor * EngineUtils.CHECKMATE_VALUE;
+                int evaluationFactor = _game.PlayerToMove == PieceColor.WHITE ? -1 : 1;
+                int eval = EngineUtils.CHECKMATE_VALUE - (initialDepth - depth);
+                return evaluationFactor * eval;
             }
             return type switch
             {
-                EvaluationType.MATERIAL => EvaluatePieces(game.Board, gamePhase),
-                EvaluationType.TRAINED_MODEL => EvaluateByTrainedModel(game),
+                EvaluationType.MATERIAL => EvaluatePieces(_game.Board, gamePhase),
+                EvaluationType.TRAINED_MODEL => EvaluateByTrainedModel(gamePhase),
                 _ => 0
             };
         }
 
-        private double EvaluateByTrainedModel(Game game)
+        private double EvaluateByTrainedModel(GamePhase gamePhase)
         {
-            float[,] positions = DataUtils.GamePositionToFloatPositions(game);
-            return _model.Predict(positions)[0];
+            double materialEval = EvaluatePieces(_game.Board, gamePhase);
+            float[,] positions = DataUtils.GamePositionToFloatPositions(_game);
+            float modelEval = _model.Predict(positions)[0];
+            return materialEval + modelEval;
         }
 
         private static double EvaluatePieces(Board board, GamePhase gamePhase)

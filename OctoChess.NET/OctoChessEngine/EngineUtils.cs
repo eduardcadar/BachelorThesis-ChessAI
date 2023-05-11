@@ -14,6 +14,21 @@ namespace OctoChessEngine
         private static int DEFAULT_QUEEN_VALUE { get; } = 900;
         private static int DEFAULT_KING_VALUE { get; } = 20000;
 
+        public static int GetDefaultPieceValue(PieceType pieceType)
+        {
+            return pieceType switch
+            {
+                PieceType.NONE => throw new NotImplementedException(),
+                PieceType.PAWN => DEFAULT_PAWN_VALUE,
+                PieceType.KNIGHT => DEFAULT_KNIGHT_VALUE,
+                PieceType.BISHOP => DEFAULT_BISHOP_VALUE,
+                PieceType.ROOK => DEFAULT_ROOK_VALUE,
+                PieceType.QUEEN => DEFAULT_QUEEN_VALUE,
+                PieceType.KING => DEFAULT_KING_VALUE,
+                _ => 0,
+            };
+        }
+
         public static int PieceValue(Piece piece, int file, int rank, GamePhase gamePhase)
         {
             if (piece.Color == PieceColor.WHITE)

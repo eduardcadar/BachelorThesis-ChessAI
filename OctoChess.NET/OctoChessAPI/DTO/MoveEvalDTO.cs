@@ -1,5 +1,5 @@
-﻿using ChessGameLibrary.Enums;
-using ChessGameLibrary;
+﻿using ChessGameLibrary;
+using ChessGameLibrary.Enums;
 using OctoChessEngine.Domain;
 
 namespace OctoChessAPI.DTO

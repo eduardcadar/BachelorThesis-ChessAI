@@ -8,26 +8,32 @@ namespace MachineLearning.PGN
     public static partial class PGNParser
     {
         private static Game _game = new();
-        private static readonly string _lineSeparator = "\n";
+
+        //private static readonly string _lineSeparator = "\n";
 
         public static IEnumerable<PGNGame> ParsePGNFile(string filePath)
         {
             string fileContent = File.ReadAllText(filePath, Encoding.UTF8).Trim();
-            string[] gameStrings = Regex.Split(fileContent, _lineSeparator + "{3}");
-
+            string[] gameStrings = Regex.Split(fileContent, "\r\n\r\n\r\n");
+            if (gameStrings.Length == 1) // if line terminator is not windows style, but linux
+                gameStrings = Regex.Split(fileContent, "\n\n\n");
             foreach (string gameString in gameStrings)
             {
-                string[] gameTagsAndMoves = Regex.Split(gameString, _lineSeparator + "{2}");
+                string[] gameTagsAndMoves = Regex.Split(gameString, "\r\n\r\n");
+                if (gameTagsAndMoves.Length == 1)
+                    gameTagsAndMoves = Regex.Split(gameString, "\n\n");
                 if (gameTagsAndMoves.Length != 2)
                     throw new ParserException("gameDataAndMoves length should be 2!");
 
                 PGNTag[] gameTags = GetTagsFromTagsText(gameTagsAndMoves[0]);
 
                 PGNMove[] moves = GetPGNMovesFromMovesText(
-                    RemoveResultFromMoves(gameTagsAndMoves[1]));
+                    RemoveResultFromMoves(gameTagsAndMoves[1])
+                );
 
-                GameResult result = GetResultFromTag(gameTags
-                    .Single(t => t.Key.Equals("Result")).Value);
+                GameResult result = GetResultFromTag(
+                    gameTags.Single(t => t.Key.Equals("Result")).Value
+                );
 
                 yield return new(gameTags, moves, result);
             }
@@ -44,14 +50,14 @@ namespace MachineLearning.PGN
             };
         }
 
-        private static string RemoveResultFromMoves(string movesText)
-            => string.Join(' ', movesText.Split(' ')[..^1]);
+        private static string RemoveResultFromMoves(string movesText) =>
+            string.Join(' ', movesText.Split(' ')[..^1]);
 
         private static PGNMove[] GetPGNMovesFromMovesText(string movesText)
         {
             _game = new();
             _game.SetPositionFromFEN(Utils.STARTING_FEN);
-            string movesString = Regex.Replace(movesText, _lineSeparator, " ");
+            string movesString = Regex.Replace(movesText, "(\r\n)|(\n)", " ");
             movesString = Regex.Replace(movesString, @"[0-9]+\.", " ").Trim();
             movesString = Regex.Replace(movesString, @"[ ]{2,}", " ");
             return movesString
@@ -62,11 +68,12 @@ namespace MachineLearning.PGN
 
         private static PGNMove GetPGNMoveFromMoveText(string moveText)
         {
-            PGNMove pgnMove = new()
-            {
-                IsCheck = moveText[^1] == '+' || moveText[^1] == '#',
-                IsCheckMate = moveText[^1] == '#'
-            };
+            PGNMove pgnMove =
+                new()
+                {
+                    IsCheck = moveText[^1] == '+' || moveText[^1] == '#',
+                    IsCheckMate = moveText[^1] == '#'
+                };
             if (pgnMove.IsCheck)
                 moveText = moveText[..^1];
             if (IsCastleMove(moveText))
@@ -114,33 +121,43 @@ namespace MachineLearning.PGN
                             moves = moves.Where(m => m.From.Rank == rank).ToArray();
                         }
                     }
-                    pgnMove.From = moves.Single(m => m.To.Equals(pgnMove.To) &&
-                        _game.Board.GetSquare(m.From).Piece.Type.Equals(pgnMove.PieceType) &&
-                        m.PromotedTo == pgnMove.PromotedTo).From;
+                    pgnMove.From = moves
+                        .Single(
+                            m =>
+                                m.To.Equals(pgnMove.To)
+                                && _game.Board
+                                    .GetSquare(m.From)
+                                    .Piece.Type.Equals(pgnMove.PieceType)
+                                && m.PromotedTo == pgnMove.PromotedTo
+                        )
+                        .From;
                 }
             }
             SimpleMove simpleMove = GetSimpleMoveFromPGNMove(pgnMove);
-            _game.Move(simpleMove.From, simpleMove.To, simpleMove.PromotedTo, fiftyMovesRule: false);
+            _game.Move(
+                simpleMove.From,
+                simpleMove.To,
+                simpleMove.PromotedTo,
+                fiftyMovesRule: false
+            );
             return pgnMove;
         }
 
-        private static SimpleMove GetSimpleMoveFromPGNMove(PGNMove pgnMove)
-            => new(pgnMove.From, pgnMove.To, pgnMove.PromotedTo);
+        private static SimpleMove GetSimpleMoveFromPGNMove(PGNMove pgnMove) =>
+            new(pgnMove.From, pgnMove.To, pgnMove.PromotedTo);
 
-        private static bool IsCaptureMove(string moveText)
-            => moveText.Contains('x');
+        private static bool IsCaptureMove(string moveText) => moveText.Contains('x');
 
-        private static bool IsPromotionMove(string moveText)
-            => moveText[^2] == '=';
+        private static bool IsPromotionMove(string moveText) => moveText[^2] == '=';
 
-        private static bool IsCastleMove(string moveText)
-            => moveText.Contains("O-O");
+        private static bool IsCastleMove(string moveText) => moveText.Contains("O-O");
 
         private static void HandleCastleData(string moveText, PGNMove pgnMove)
         {
             pgnMove.PieceType = PieceType.KING;
             const int fromFile = 4;
-            int rank = 0, toFile = 6;
+            int rank = 0,
+                toFile = 6;
             pgnMove.IsCastle = true;
             if (_game.PlayerToMove == PieceColor.BLACK)
                 rank = 7;
@@ -154,10 +171,10 @@ namespace MachineLearning.PGN
 
         private static PGNTag[] GetTagsFromTagsText(string tagsText)
         {
-            string[] gameTagsStrings = tagsText.Split(_lineSeparator);
-            return gameTagsStrings
-                .Select(GetTagFromLine)
-                .ToArray();
+            string[] gameTagsStrings = Regex.Split(tagsText, "\r\n");
+            if (gameTagsStrings.Length == 1)
+                gameTagsStrings = Regex.Split(tagsText, "\n");
+            return gameTagsStrings.Select(GetTagFromLine).ToArray();
         }
 
         private static PGNTag GetTagFromLine(string line)

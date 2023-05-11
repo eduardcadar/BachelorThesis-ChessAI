@@ -11,9 +11,11 @@ namespace MachineLearning.ManageData
 
         public static FilePositions GetMeanOfPositionResults(string folder)
         {
+            int positionsCount = 0;
             Dictionary<string, List<float>> positionsResults = new();
             foreach (string file in Directory.GetFiles(folder))
             {
+                Console.WriteLine(file);
                 string[] lines = File.ReadAllLines(file)[1..];
                 foreach (string line in lines)
                 {
@@ -23,15 +25,24 @@ namespace MachineLearning.ManageData
                     if (!positionsResults.ContainsKey(position))
                         positionsResults.Add(position, new());
                     positionsResults[position].Add(result);
+                    positionsCount++;
                 }
             }
             List<float[]> positions = new();
             List<float> values = new();
-            foreach (var key in positionsResults.Keys)
+            int i = 0;
+            int a = positionsResults.Keys.Count / 10;
+            foreach (string key in positionsResults.Keys)
             {
+                if (i % a == 0)
+                    Console.Write($"{i / a * 10}% ");
+                i++;
                 positions.Add(EncodedPositionStringToFloatArray(key));
                 values.Add(positionsResults[key].Average());
             }
+            Console.WriteLine();
+            Console.WriteLine($"Number of positions: {positionsCount}");
+            Console.WriteLine($"Number of distinct positions: {positionsResults.Keys.Count}");
             return new(CreateRectangularArray(positions), values.ToArray());
         }
 

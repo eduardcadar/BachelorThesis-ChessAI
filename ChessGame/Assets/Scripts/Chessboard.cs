@@ -2,40 +2,75 @@ using ChessGameLibrary;
 using ChessGameLibrary.Enums;
 using System.Collections.Generic;
 using UnityEngine;
+using static Assets.Scripts.EngineUtils;
 
 public class Chessboard : MonoBehaviour
 {
     [Header("Style")]
-    [SerializeField] private Material tileMaterial;
-    [SerializeField] private Material selectedMaterial;
+    [SerializeField]
+    private Material tileMaterial;
+
+    [SerializeField]
+    private Material selectedMaterial;
     public GameObject SelectedSquarePrefab;
     public GameObject ValidMoveSquarePrefab;
     public GameObject ThreatMapSquarePrefab;
     public WhitePromotionPieceScript SelectPromotionPieceW;
-    [SerializeField] private GameObject PawnW;
-    [SerializeField] private GameObject KnightW;
-    [SerializeField] private GameObject PawnB;
-    [SerializeField] private GameObject KnightB;
-    [SerializeField] private GameObject BishopB;
-    [SerializeField] private GameObject BishopW;
-    [SerializeField] private GameObject RookB;
-    [SerializeField] private GameObject RookW;
-    [SerializeField] private GameObject QueenB;
-    [SerializeField] private GameObject QueenW;
-    [SerializeField] private GameObject KingB;
-    [SerializeField] private GameObject KingW;
+
+    [SerializeField]
+    private GameObject PawnW;
+
+    [SerializeField]
+    private GameObject KnightW;
+
+    [SerializeField]
+    private GameObject PawnB;
+
+    [SerializeField]
+    private GameObject KnightB;
+
+    [SerializeField]
+    private GameObject BishopB;
+
+    [SerializeField]
+    private GameObject BishopW;
+
+    [SerializeField]
+    private GameObject RookB;
+
+    [SerializeField]
+    private GameObject RookW;
+
+    [SerializeField]
+    private GameObject QueenB;
+
+    [SerializeField]
+    private GameObject QueenW;
+
+    [SerializeField]
+    private GameObject KingB;
+
+    [SerializeField]
+    private GameObject KingW;
 
     public Game Game;
-    //public bool IsPlayerWhiteHuman { get { return Game.PlayerTypeWhite == PlayerType.HUMAN; } }
-    //public bool IsPlayerBlackHuman { get { return Game.PlayerTypeBlack== PlayerType.HUMAN; } }
+    public bool IsPlayerWhiteHuman { get; set; } = true;
+    public bool IsPlayerBlackHuman { get; set; } = true;
     public GameObject SelectedSquare { get; set; } = null;
     public List<GameObject> ValidMoves = new();
     public List<GameObject> ThreatMap = new();
     public bool ShowWhiteThreatMap = false;
     public bool ShowBlackThreatMap = false;
 
+    public void SetPlayerTypes(PlayerType white, PlayerType black)
+    {
+        IsPlayerWhiteHuman = (white == PlayerType.HUMAN);
+        IsPlayerBlackHuman = (black == PlayerType.HUMAN);
+    }
+
     // LOGIC
-    private static readonly string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    private static readonly string startingFEN =
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
     private float TILE_SIZE;
@@ -83,7 +118,8 @@ public class Chessboard : MonoBehaviour
         {
             if (color == PieceColor.WHITE ? sq.IsAttackedByWhite : sq.IsAttackedByBlack)
             {
-                int x = sq.SquareCoords.File, y = sq.SquareCoords.Rank;
+                int x = sq.SquareCoords.File,
+                    y = sq.SquareCoords.Rank;
                 ThreatMap.Add(Instantiate(ThreatMapSquarePrefab, tiles[x, y].transform));
             }
         }
@@ -102,33 +138,77 @@ public class Chessboard : MonoBehaviour
     private int GeneratePiecesFromFEN(string FEN)
     {
         string[] fields = FEN.Split(' ');
-        int rank = 7, file = 0;
+        int rank = 7,
+            file = 0;
         foreach (char letter in fields[0])
         {
             switch (letter)
             {
-                case 'p': InstantiatePiece(PieceType.PAWN, PieceColor.BLACK, file, rank); break;
-                case 'n': InstantiatePiece(PieceType.KNIGHT, PieceColor.BLACK, file, rank); break;
-                case 'b': InstantiatePiece(PieceType.BISHOP, PieceColor.BLACK, file, rank); break;
-                case 'r': InstantiatePiece(PieceType.ROOK, PieceColor.BLACK, file, rank); break;
-                case 'q': InstantiatePiece(PieceType.QUEEN, PieceColor.BLACK, file, rank); break;
-                case 'k': InstantiatePiece(PieceType.KING, PieceColor.BLACK, file, rank); break;
-                case 'P': InstantiatePiece(PieceType.PAWN, PieceColor.WHITE, file, rank); break;
-                case 'N': InstantiatePiece(PieceType.KNIGHT, PieceColor.WHITE, file, rank); break;
-                case 'B': InstantiatePiece(PieceType.BISHOP, PieceColor.WHITE, file, rank); break;
-                case 'R': InstantiatePiece(PieceType.ROOK, PieceColor.WHITE, file, rank); break;
-                case 'Q': InstantiatePiece(PieceType.QUEEN, PieceColor.WHITE, file, rank); break;
-                case 'K': InstantiatePiece(PieceType.KING, PieceColor.WHITE, file, rank); break;
-                case '/': rank--; file = -1; break;
-                case '1': break;
-                case '2': file += 1; break;
-                case '3': file += 2; break;
-                case '4': file += 3; break;
-                case '5': file += 4; break;
-                case '6': file += 5; break;
-                case '7': file += 6; break;
-                case '8': file += 7; break;
-                default: return -1;
+                case 'p':
+                    InstantiatePiece(PieceType.PAWN, PieceColor.BLACK, file, rank);
+                    break;
+                case 'n':
+                    InstantiatePiece(PieceType.KNIGHT, PieceColor.BLACK, file, rank);
+                    break;
+                case 'b':
+                    InstantiatePiece(PieceType.BISHOP, PieceColor.BLACK, file, rank);
+                    break;
+                case 'r':
+                    InstantiatePiece(PieceType.ROOK, PieceColor.BLACK, file, rank);
+                    break;
+                case 'q':
+                    InstantiatePiece(PieceType.QUEEN, PieceColor.BLACK, file, rank);
+                    break;
+                case 'k':
+                    InstantiatePiece(PieceType.KING, PieceColor.BLACK, file, rank);
+                    break;
+                case 'P':
+                    InstantiatePiece(PieceType.PAWN, PieceColor.WHITE, file, rank);
+                    break;
+                case 'N':
+                    InstantiatePiece(PieceType.KNIGHT, PieceColor.WHITE, file, rank);
+                    break;
+                case 'B':
+                    InstantiatePiece(PieceType.BISHOP, PieceColor.WHITE, file, rank);
+                    break;
+                case 'R':
+                    InstantiatePiece(PieceType.ROOK, PieceColor.WHITE, file, rank);
+                    break;
+                case 'Q':
+                    InstantiatePiece(PieceType.QUEEN, PieceColor.WHITE, file, rank);
+                    break;
+                case 'K':
+                    InstantiatePiece(PieceType.KING, PieceColor.WHITE, file, rank);
+                    break;
+                case '/':
+                    rank--;
+                    file = -1;
+                    break;
+                case '1':
+                    break;
+                case '2':
+                    file += 1;
+                    break;
+                case '3':
+                    file += 2;
+                    break;
+                case '4':
+                    file += 3;
+                    break;
+                case '5':
+                    file += 4;
+                    break;
+                case '6':
+                    file += 5;
+                    break;
+                case '7':
+                    file += 6;
+                    break;
+                case '8':
+                    file += 7;
+                    break;
+                default:
+                    return -1;
             }
             file++;
         }
@@ -182,13 +262,9 @@ public class Chessboard : MonoBehaviour
         }
     }
 
-    private void OnMouseDown()
-    {
-    }
+    private void OnMouseDown() { }
 
-    private void Update()
-    {
-    }
+    private void Update() { }
 
     // Generate the board
     private void GenerateAllTiles(int tileCountX, int tileCountY)
@@ -207,8 +283,11 @@ public class Chessboard : MonoBehaviour
         BoardTile tileObject = tileGameObject.AddComponent<BoardTile>();
 
         tileObject.InitializeTile(this, x, y);
-        tileObject.transform.position = new Vector3(-4 * tileSize + x * tileSize + tileSize/2f,
-            -4 * tileSize + y * tileSize + tileSize/2f, 0);
+        tileObject.transform.position = new Vector3(
+            -4 * tileSize + x * tileSize + tileSize / 2f,
+            -4 * tileSize + y * tileSize + tileSize / 2f,
+            0
+        );
         tileObject.transform.parent = transform;
 
         Mesh mesh = new();

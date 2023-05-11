@@ -2,7 +2,7 @@
 {
     public enum EvaluationType
     {
-        MATERIAL,
-        TRAINED_MODEL
+        MATERIAL = 0,
+        TRAINED_MODEL = 1
     }
 }

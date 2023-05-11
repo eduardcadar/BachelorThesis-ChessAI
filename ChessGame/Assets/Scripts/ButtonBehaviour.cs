@@ -1,5 +1,5 @@
 using UnityEngine;
-using ChessGameLibrary.Enums;
+using static Assets.Scripts.EngineUtils;
 
 public class ButtonBehaviour : MonoBehaviour
 {
@@ -30,14 +30,13 @@ public class ButtonBehaviour : MonoBehaviour
     {
         if (Chessboard == null)
             InitializeChessboard();
-        //Chessboard.Game.SetPlayerTypes(PlayerType.HUMAN, PlayerType.HUMAN);
+        Chessboard.SetPlayerTypes(PlayerType.HUMAN, PlayerType.HUMAN);
     }
 
     public void PlayerVsEngine()
     {
         if (Chessboard == null)
             InitializeChessboard();
-        //Chessboard.Game.SetPlayerTypes(PlayerType.HUMAN, PlayerType.STOCKFISH);
-        // initialize engine
+        Chessboard.SetPlayerTypes(PlayerType.HUMAN, PlayerType.ENGINE);
     }
 }

@@ -10,7 +10,7 @@ namespace MachineLearning
     {
         public string Optimizer { get; } = "sgd";
         public string Loss { get; } = "mean_squared_error";
-        public string[] Metrics { get; } = { "mse" };
+        public string[] Metrics { get; } = { };
         private BaseModel _model;
 
         public MachineLearningModel()
@@ -21,8 +21,7 @@ namespace MachineLearning
         public void InitializeModel()
         {
             Sequential model = new();
-            model.Add(new Dense(64, activation: "relu", input_shape: new Shape(70)));
-            model.Add(new Dense(16, activation: "relu"));
+            model.Add(new Dense(32, activation: "relu", input_shape: new Shape(70)));
             model.Add(new Dense(1, activation: "tanh"));
             model.Compile(optimizer: Optimizer, loss: Loss, metrics: Metrics);
             _model = model;
@@ -65,13 +64,13 @@ namespace MachineLearning
             _model.Compile(optimizer: Optimizer, loss: Loss, metrics: Metrics);
         }
 
-        public float[] Predict(float[,] positions) => _model.Predict(positions).GetData<float>();
+        public float[] Predict(float[,] positions) =>
+            _model.Predict(positions, verbose: 0).GetData<float>();
 
         public void Evaluate(float[,] positions, float[] results, int batch_size = 2)
         {
             var score = _model.Evaluate(positions, results, batch_size: batch_size);
             Console.WriteLine($"Test loss: {score[0]}");
-            Console.WriteLine($"Test mean square error: {score[1]}");
         }
     }
 }

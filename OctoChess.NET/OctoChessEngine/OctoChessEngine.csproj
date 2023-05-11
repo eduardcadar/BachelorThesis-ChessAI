@@ -8,12 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ChessGameLibrary\ChessGameLibrary.csproj" />
-    <ProjectReference Include="..\MachineLearning\MachineLearning.csproj" />
+    <Compile Remove="Interfaces\**" />
+    <EmbeddedResource Remove="Interfaces\**" />
+    <None Remove="Interfaces\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Interfaces\" />
+    <ProjectReference Include="..\..\ChessGameLibrary\ChessGameLibrary.csproj" />
+    <ProjectReference Include="..\MachineLearning\MachineLearning.csproj" />
   </ItemGroup>
 
 </Project>

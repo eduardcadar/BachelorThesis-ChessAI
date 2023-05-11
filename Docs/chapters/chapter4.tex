@@ -1,62 +1,98 @@
-\chapter{Training}
+\chapter{Methodology}
 \label{chap:ch4}
 
-\section{Dataset}
+In this chapter I will describe the implementation of the three main steps taken by the engine to find the best move: generating legal moves for a position, searching for legally reachable positions from the current position, and then evaluating each one and determining which one is the best \cite{marsland1986review}.
+
+%Description of the approach taken to build the chess engine
+%Explanation of the AI techniques used and why they were chosen
+
+\section{Move generation}
 \label{sec:ch4sec1}
 
-The dataset consists of chess matches played at grandmaster level downloaded in PGN format from the website chessabc.com\cite{chessabc}
+The engine computes the pseudo-legal moves of the pieces of the player that is moving, then it does each move, checks the state of the board, adds the move to the list of legal moves if the board is in a valid state, and then undoes the move.
 
-A PGN (portable game notation) file contains multiple chess matches. Each match has several headers (name of player with white pieces, name of player with black pieces, event it was played at, date it was played on, result, elo of players etc.), an empty line, and then the 'movetext section'. The matches in a PGN file are separated by two empty lines. Following is a sample PGN match:
-\vspace*{\baselineskip}
+To check the state of the board I used a threat map (fig. \ref{fig:threatMap}), which keeps track of the squares that are under attack or are defended by at least one piece (including empty squares, squares with allied pieces, and squares with opponent pieces). After each move, the threat map is updated in the following way: for each white piece on the board, it sets "IsAttackedByWhite" to true for all the squares it attacks, and for each black piece on the board, it sets "IsAttackedByBlack" to true for all the squares it attacks.
 
-\noindent [Event "F/S Return Match"]
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.5]{figures/white-threat-map.png}
+  \captionof{figure}{White threat map}
+  \label{fig:threatMap}
+\end{figure}
 
-\noindent [Site "Belgrade, Serbia JUG"]
+\section{Search}
+\label{sec:ch4sec2}
 
-\noindent [Date "1992.11.04"]
+The simplest way of searching in the game tree is through a fixed depth Minimax algorithm, which would be mathematically accurate, but would not yield good results and would be very slow. However, in combination with some optimizations and heuristics, it can compute faster and find better moves.
 
-\noindent [Round "29"]
+\subsection{Alpha-beta pruning}
+\label{subsec:ch4sec2subsec1}
 
-\noindent [White "Fischer, Robert J."]
+The Minimax algorithm was improved with Alpha-beta pruning, which preserves the accuracy of the algorithm and significantly reduces the number of nodes visited if combined with a good move ordering heuristic \cite{eric1992analysis}.
 
-\noindent [Black "Spassky, Boris V."]
+A simple pseudocode for Alpha-beta pruning is shown in fig. \ref{fig:alphabetaPseudocode}:
 
-\noindent [Result "1/2-1/2"]
-\vspace*{\baselineskip}
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.9]{figures/alphabeta-pseudocode.png}
+  \captionof{figure}{Alpha-beta pruning pseudocode}
+  \label{fig:alphabetaPseudocode}
+\end{figure}
 
-\noindent 1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3
+The heuristic I used in combination with Alpha-beta pruning is MVV-LVA (Most Valuable Victim - Least Valuable Agressor): the moves that capture pieces with high values are first, and if multiple moves capture a piece of the same value, the moves with the least valuable agressor are prioritized \cite{mvv-lva}. The heuristic is based on the observation that in chess, it is often advantageous to capture pieces of higher value than the capturing piece, while avoiding exchanges where the capturing piece is more valuable than the captured piece. It is also relatively easy to implement, and does not require much computational overhead. Other heuristics, use the evaluations of previous searches or the results from other branches, and require maintaining and updating additional data structures to keep track of the move history and their performance.
 
-\noindent O-O 9. h3 Nb8 10. d4 Nbd7 11. c4 c6 12. cxb5 axb5 13. Nc3 Bb7 14. Bg5 b4 15.
+\subsection{Quiescence search}
+\label{subsec:ch4sec2subsec2}
 
-\noindent Nb1 h6 16. Bh4 c5 17. dxe5 Nxe4 18. Bxe7 Qxe7 19. exd6 Qf6 20. Nbd2 Nxd6 21.
+\subsection{Iterative deepening}
+\label{subsec:ch4sec2subsec3}
 
-\noindent Nc4 Nxc4 22. Bxc4 Nb6 23. Ne5 Rae8 24. Bxf7+ Rxf7 25. Nxf7 Rxe1+ 26. Qxe1 Kxf7
+\section{Evaluation}
+\label{sec:ch4sec3}
 
-\noindent 27. Qe3 Qg5 28. Qxg5 hxg5 29. b3 Ke6 30. a3 Kd6 31. axb4 cxb4 32. Ra5 Nd5 33.
+I used two methods of evaluating a chess board position. The first one is a simple evaluation function based on the position of the pieces on the board, and the second one is a neural network model, trained on matches played at grandmaster level.
 
-\noindent f3 Bc8 34. Kf2 Bf5 35. Ra7 g6 36. Ra6+ Kc5 37. Ke1 Nf4 38. g3 Nxh3 39. Kd2 Kb5
+\subsection{Board pieces}
+\label{subsec:ch4sec3subsec1}
 
-\noindent 40. Rd6 Kc5 41. Ra6 Nf2 42. g4 Bd3 43. Re6 1/2-1/2
-\vspace*{\baselineskip}
+This evaluation function assigns a value to the board configuration based on the position of the pieces and the state of the game (opening/middlegame/endgame). I considered the state to be the opening if there were less than 13 moves made, middlegame if there are at least a queen or 3 minor pieces (rook/bishop/knight) on the board, and the endgame otherwise.
 
-The movetext section contains the chess moves, move numbers, optional annotations and a concluding game termination marker (the result of the match). The result can be '1-0' (white won), '0-1' (black won) or '1/2-1/2' (draw). The moves are written in SAN (standard algebraic notation). SAN identifies each square on the board as a combination of file (a-h) and rank (1-8) (see fig. \ref{fig:boardSquares}).
+Each piece has a base value (fig. \ref{fig:piecesValues}), to which another value is added based on the square the piece occupies. Each piece has an 8x8 table, with a value for each square. The tables contain values as to encourage development of the pieces (example - fig. \ref{fig:knightValueTable} shows the table for the white knights). The tables for black pieces are horizontally simetric to the ones for the white pieces. The king has an additional table for the endgame, because in the opening and middlegame it is encouraged to castle and discouraged to move far from the first rank (fig. \ref{fig:kingValueTableMiddlegame}), while in the endgame it is encouraged to go towards the center and play an active part in the game (fig. \ref{fig:kingValueTableEndgame}) \cite{wikiEval}.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.4\textwidth]{figures/board-squares.png}
-    \caption{Board squares}
-    \label{fig:boardSquares}
+    \begin{minipage}{.49\textwidth}
+      \centering
+      \includegraphics{figures/pieces_values.png}
+      \captionof{figure}{Base values for the pieces}
+      \label{fig:piecesValues}
+    \end{minipage}
+    \begin{minipage}{.49\textwidth}
+      \centering
+      \includegraphics{figures/knight_value_table.png}
+      \captionof{figure}{Knight value table}
+      \label{fig:knightValueTable}
+    \end{minipage}
 \end{figure}
 
-Each piece can be identified by a letter (P - pawn, N - knight, B - bishop, R - rook, Q - queen, K - king). Simple SAN moves contain only the destination square, and the letter of piece that moves, if the piece is not a pawn (for example, pawn to c6 is written simply as c6, while knight to c6 is written as Nc6). There are additional rules for moves:
-\begin{itemize}
-    \item Moves that capture a piece contain the 'x' character right before the destination square (ex: Bxb4)
-    \item Castling kingside is written as 'O-O', while queenside castling is written as 'O-O-O'
-    \item Moves of pawns to the last rank (promotion moves) contain the equal sign ('=') right after the destination square, followed by the letter of the piece that the pawn promotes to (ex: e8=Q)
-    \item If there are more pieces of the same kind that can move to the destination square, the file of the originating square is added right after the piece (ex: Nbc6); if this does not solve the ambiguation, the rank of the originating square is added instead (ex: N8c6), and if neither of these works, both the file and the rank are added (ex: Nb8c6)
-    \item If the move checks the opponent's king, a plus sign ('+') is added at the end of the move (ex: Qe7+); if the move checkmates the opponent's king, the octothorpe sign ('\#') is added instead (ex: Qe7\#)
-\end{itemize}
-\cite{edwards1994standard}
+\begin{figure}[h]
+    \centering
+    \caption{King value tables}
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics{figures/king_value_table_middlegame.png}
+        \caption{King middlegame value table}
+        \label{fig:kingValueTableMiddlegame}
+    \end{subfigure}
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics{figures/king_value_table_endgame.png}
+        \caption{King endgame value table}
+        \label{fig:kingValueTableEndgame}
+    \end{subfigure}
+\end{figure}
 
-\section{Layers}
-\label{sec:ch4sec2}
+\subsection{Neural network}
+\label{subsec:ch4sec3subsec2}
+
+For the second evaluation function, I trained a neural network on master chess matches, which I will expand in a separate chapter.

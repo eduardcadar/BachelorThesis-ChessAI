@@ -1,8 +1,8 @@
-﻿using System;
+﻿using ChessGameLibrary.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ChessGameLibrary.Enums;
 
 namespace ChessGameLibrary
 {
@@ -19,24 +19,38 @@ namespace ChessGameLibrary
         public bool WhiteCanCastleQueen;
         public bool BlackCanCastleQueen;
         public int HalfmoveClock;
-        public int NoMoves;
+        public int MovesCount;
         public Dictionary<string, int> Positions = new Dictionary<string, int>();
-        public bool IsOver { get { return State != GameState.INPROGRESS; } }
-        public bool IsDraw { get { return State == GameState.DRAW || State == GameState.STALEMATE; } }
+        public bool IsOver
+        {
+            get { return State != GameState.INPROGRESS; }
+        }
+        public bool IsDraw
+        {
+            get { return State == GameState.DRAW || State == GameState.STALEMATE; }
+        }
 
-        public bool IsInitialized { get { return Board != null; } }
+        public bool IsInitialized
+        {
+            get { return Board != null; }
+        }
 
         public bool SetPositionFromFEN(string fen)
         {
             Positions[""] = 0;
             Board = new Board();
             string[] fields = fen.Split(' ');
-            int rank = 7, file = 0;
+            int rank = 7,
+                file = 0;
             foreach (char letter in fields[0])
             {
                 if (Utils.PieceLetters.Contains(letter))
-                    AddPieceToBoard(Utils.GetPieceTypeFromPieceLetter(letter),
-                        Utils.GetPieceColorFromPieceLetter(letter), file, rank);
+                    AddPieceToBoard(
+                        Utils.GetPieceTypeFromPieceLetter(letter),
+                        Utils.GetPieceColorFromPieceLetter(letter),
+                        file,
+                        rank
+                    );
                 else if (letter == '/')
                 {
                     rank--;
@@ -51,9 +65,14 @@ namespace ChessGameLibrary
 
             switch (fields[1])
             {
-                case "w": PlayerToMove = PieceColor.WHITE; break;
-                case "b": PlayerToMove = PieceColor.BLACK; break;
-                default: return false;
+                case "w":
+                    PlayerToMove = PieceColor.WHITE;
+                    break;
+                case "b":
+                    PlayerToMove = PieceColor.BLACK;
+                    break;
+                default:
+                    return false;
             }
 
             WhiteCanCastleKing = fields[2].Contains('K');
@@ -65,7 +84,7 @@ namespace ChessGameLibrary
 
             HalfmoveClock = int.Parse(fields[4]);
 
-            NoMoves = int.Parse(fields[5]);
+            MovesCount = int.Parse(fields[5]);
 
             State = GameState.INPROGRESS;
             UpdateThreatMap();
@@ -74,6 +93,11 @@ namespace ChessGameLibrary
             Positions[positionString] = 1;
             CheckGameState(positionString);
             return true;
+        }
+
+        public string GetBoardPrintFormat()
+        {
+            return Board.ToString();
         }
 
         private string GetBoardFENPieces()
@@ -136,14 +160,12 @@ namespace ChessGameLibrary
                 sb.Append('-');
             sb.Append(' ');
 
-            sb.Append(HalfmoveClock)
-                .Append(' ')
-                .Append(NoMoves);
+            sb.Append(HalfmoveClock).Append(' ').Append(MovesCount);
 
             return sb.ToString();
         }
 
-        private string GetPositionFENString()
+        public string GetPositionFENString()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(GetBoardFENPieces())
@@ -168,9 +190,13 @@ namespace ChessGameLibrary
                         capturedPieceType = capturedPiece.Type;
                     if (Utils.IsPromotionMove(from.Piece, to))
                         foreach (PieceType type in Utils.PromotionPieceTypes)
-                            LegalMoves.Add(new SimpleMove(from.SquareCoords, to, type, capturedPieceType));
+                            LegalMoves.Add(
+                                new SimpleMove(from.SquareCoords, to, type, capturedPieceType)
+                            );
                     else
-                        LegalMoves.Add(new SimpleMove(from.SquareCoords, to, pieceCaptured: capturedPieceType));
+                        LegalMoves.Add(
+                            new SimpleMove(from.SquareCoords, to, pieceCaptured: capturedPieceType)
+                        );
                 }
             }
         }
@@ -180,7 +206,8 @@ namespace ChessGameLibrary
             MoveInfo moveToUndo = MovesHistory.Last();
             MovesHistory.Remove(moveToUndo);
             State = GameState.INPROGRESS;
-            SquareCoords from = moveToUndo.From, to = moveToUndo.To;
+            SquareCoords from = moveToUndo.From,
+                to = moveToUndo.To;
             Board.Squares[from.File, from.Rank].Piece = moveToUndo.Piece;
             if (moveToUndo.PromotedTo != PieceType.NONE)
                 Board.Squares[from.File, from.Rank].Piece.Type = PieceType.PAWN;
@@ -205,18 +232,51 @@ namespace ChessGameLibrary
             BlackCanCastleKing = moveToUndo.PrevBlackCanCastleKing;
             BlackCanCastleQueen = moveToUndo.PrevBlackCanCastleQueen;
             HalfmoveClock = moveToUndo.PrevHalfmoveClock;
-            NoMoves--;
+            MovesCount--;
             UpdateThreatMap();
         }
 
-        public MoveInfo Move(SquareCoords from, SquareCoords to, PieceType promotedTo = PieceType.QUEEN,
-            bool justCheck = false, bool fiftyMovesRule = true)
+        public MoveInfo Move(
+            string move,
+            PieceType promotedTo = PieceType.QUEEN,
+            bool justCheck = false,
+            bool fiftyMovesRule = true
+        )
+        {
+            if (move.Length != 4)
+                throw new Exception("WRONG MOVE FORMAT");
+            SquareCoords from = new SquareCoords(move[..2]);
+            SquareCoords to = new SquareCoords(move[2..]);
+            return Move(
+                from,
+                to,
+                promotedTo: promotedTo,
+                justCheck: justCheck,
+                fiftyMovesRule: fiftyMovesRule
+            );
+        }
+
+        public MoveInfo Move(
+            SquareCoords from,
+            SquareCoords to,
+            PieceType promotedTo = PieceType.QUEEN,
+            bool justCheck = false,
+            bool fiftyMovesRule = true
+        )
         {
             Square fromSq = Board.Squares[from.File, from.Rank];
             Piece piece = fromSq.Piece;
             Square toSq = Board.Squares[to.File, to.Rank];
-            MoveInfo moveInfo = new MoveInfo(MoveType.NORMAL, piece, from, to,
-                WhiteCanCastleKing, WhiteCanCastleQueen, BlackCanCastleKing, BlackCanCastleQueen)
+            MoveInfo moveInfo = new MoveInfo(
+                MoveType.NORMAL,
+                piece,
+                from,
+                to,
+                WhiteCanCastleKing,
+                WhiteCanCastleQueen,
+                BlackCanCastleKing,
+                BlackCanCastleQueen
+            )
             {
                 PrevEnPassantSquare = EnPassantSquare,
                 PrevHalfmoveClock = HalfmoveClock
@@ -234,7 +294,8 @@ namespace ChessGameLibrary
                 //error
             }
             // to disable castling rights after king/rook moves or rook is captured
-            if (piece.Type == PieceType.KING) KingMoved(piece.Color);
+            if (piece.Type == PieceType.KING)
+                KingMoved(piece.Color);
             RookMovedOrCaptured(from);
             RookMovedOrCaptured(to);
             if (Utils.IsCastleMove(piece, from, to)) // if castle move, also move the rook
@@ -271,7 +332,7 @@ namespace ChessGameLibrary
                 HalfmoveClock = 0;
             else
                 HalfmoveClock++;
-            NoMoves++;
+            MovesCount++;
             UpdateThreatMap();
             if (fiftyMovesRule && HalfmoveClock == Utils.HALFMOVE_CLOCK_LIMIT)
             {
@@ -321,12 +382,18 @@ namespace ChessGameLibrary
 
         private void CheckGameState(string positionString)
         {
-            PieceColor otherPlayer = PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
+            PieceColor otherPlayer =
+                PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
             if (LegalMoves.Count == 0)
             {
                 Square sq = Board.Squares
                     .Cast<Square>()
-                    .Single(s => s.Piece != null && s.Piece.Type == PieceType.KING && s.Piece.Color == PlayerToMove);
+                    .Single(
+                        s =>
+                            s.Piece != null
+                            && s.Piece.Type == PieceType.KING
+                            && s.Piece.Color == PlayerToMove
+                    );
                 if (sq.IsAttackedBy(otherPlayer))
                     State = GameState.CHECKMATE;
                 else
@@ -348,11 +415,18 @@ namespace ChessGameLibrary
 
         private bool BoardIsValid()
         {
-            if (Board == null) return false;
-            PieceColor otherPlayer = PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
+            if (Board == null)
+                return false;
+            PieceColor otherPlayer =
+                PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
             Square sq = Board.Squares
                 .Cast<Square>()
-                .Single(s => s.Piece != null && s.Piece.Type == PieceType.KING && s.Piece.Color == otherPlayer);
+                .Single(
+                    s =>
+                        s.Piece != null
+                        && s.Piece.Type == PieceType.KING
+                        && s.Piece.Color == otherPlayer
+                );
             if (sq.IsAttackedBy(PlayerToMove))
                 return false;
             return true;
@@ -373,9 +447,7 @@ namespace ChessGameLibrary
                 PieceType.KING => KingMoves(piece.Color, from),
                 _ => throw new NotImplementedException()
             };
-            squareCoords = squareCoords
-                .Where(to => CheckMove(from, to))
-                .ToList();
+            squareCoords = squareCoords.Where(to => CheckMove(from, to)).ToList();
             return squareCoords;
         }
 
@@ -386,18 +458,18 @@ namespace ChessGameLibrary
             foreach (Square square in Board.Squares)
             {
                 Piece piece = square.Piece;
-                if (piece == null) continue;
-                List<SquareCoords> pieceThreatMap =
-                    piece.Type switch
-                    {
-                        PieceType.PAWN => PawnThreatMap(piece.Color, square.SquareCoords),
-                        PieceType.KNIGHT => KnightThreatMap(square.SquareCoords),
-                        PieceType.BISHOP => BishopThreatMap(square.SquareCoords),
-                        PieceType.ROOK => RookThreatMap(square.SquareCoords),
-                        PieceType.QUEEN => QueenThreatMap(square.SquareCoords),
-                        PieceType.KING => KingThreatMap(square.SquareCoords),
-                        _ => throw new NotImplementedException(),
-                    };
+                if (piece == null)
+                    continue;
+                List<SquareCoords> pieceThreatMap = piece.Type switch
+                {
+                    PieceType.PAWN => PawnThreatMap(piece.Color, square.SquareCoords),
+                    PieceType.KNIGHT => KnightThreatMap(square.SquareCoords),
+                    PieceType.BISHOP => BishopThreatMap(square.SquareCoords),
+                    PieceType.ROOK => RookThreatMap(square.SquareCoords),
+                    PieceType.QUEEN => QueenThreatMap(square.SquareCoords),
+                    PieceType.KING => KingThreatMap(square.SquareCoords),
+                    _ => throw new NotImplementedException(),
+                };
                 switch (piece.Color)
                 {
                     case PieceColor.WHITE:
@@ -416,7 +488,8 @@ namespace ChessGameLibrary
         {
             List<SquareCoords> squares = new List<SquareCoords>();
             int direction = pieceColor == PieceColor.WHITE ? 1 : -1;
-            SquareCoords s1, s2;
+            SquareCoords s1,
+                s2;
             s1 = new SquareCoords(from.File + 1, from.Rank + direction);
             s2 = new SquareCoords(from.File - 1, from.Rank + direction);
             if (IsInsideBoard(s1.File, s1.Rank))
@@ -431,8 +504,10 @@ namespace ChessGameLibrary
             List<SquareCoords> squares = new List<SquareCoords>();
             for (int i = 0; i < Utils.KnightMoveCoordsX.Length; i++)
             {
-                int X = Utils.KnightMoveCoordsX[i], Y = Utils.KnightMoveCoordsY[i];
-                int newFile = from.File + X, newRank = from.Rank + Y;
+                int X = Utils.KnightMoveCoordsX[i],
+                    Y = Utils.KnightMoveCoordsY[i];
+                int newFile = from.File + X,
+                    newRank = from.Rank + Y;
                 if (IsInsideBoard(newFile, newRank))
                 {
                     squares.Add(new SquareCoords(newFile, newRank));
@@ -506,34 +581,42 @@ namespace ChessGameLibrary
                 case PieceColor.WHITE:
                     if (WhiteCanCastleKing)
                     {
-                        if (!Board.Squares[4, 0].IsAttackedByBlack &&
-                            IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 5, 0) &&
-                            IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 6, 0))
+                        if (
+                            !Board.Squares[4, 0].IsAttackedByBlack
+                            && IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 5, 0)
+                            && IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 6, 0)
+                        )
                             squares.Add(new SquareCoords(6, 0));
                     }
                     if (WhiteCanCastleQueen)
                     {
-                        if (!Board.Squares[4, 0].IsAttackedByBlack &&
-                            IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 3, 0) &&
-                            IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 2, 0) &&
-                            IsSquareEmpty(1, 0))
+                        if (
+                            !Board.Squares[4, 0].IsAttackedByBlack
+                            && IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 3, 0)
+                            && IsSquareEmptyAndNotAttacked(PieceColor.BLACK, 2, 0)
+                            && IsSquareEmpty(1, 0)
+                        )
                             squares.Add(new SquareCoords(2, 0));
                     }
                     break;
                 case PieceColor.BLACK:
                     if (BlackCanCastleKing)
                     {
-                        if (!Board.Squares[4, 7].IsAttackedByWhite &&
-                            IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 5, 7) &&
-                            IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 6, 7))
+                        if (
+                            !Board.Squares[4, 7].IsAttackedByWhite
+                            && IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 5, 7)
+                            && IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 6, 7)
+                        )
                             squares.Add(new SquareCoords(6, 7));
                     }
                     if (BlackCanCastleQueen)
                     {
-                        if (!Board.Squares[4, 7].IsAttackedByWhite &&
-                            IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 3, 7) &&
-                            IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 2, 7) &&
-                            IsSquareEmpty(1, 7))
+                        if (
+                            !Board.Squares[4, 7].IsAttackedByWhite
+                            && IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 3, 7)
+                            && IsSquareEmptyAndNotAttacked(PieceColor.WHITE, 2, 7)
+                            && IsSquareEmpty(1, 7)
+                        )
                             squares.Add(new SquareCoords(2, 7));
                     }
                     break;
@@ -586,19 +669,26 @@ namespace ChessGameLibrary
                 if (Board.Squares[from.File, nextRank].Piece == null)
                 {
                     squares.Add(new SquareCoords(from.File, nextRank));
-                    if (from.Rank == firstPawnRank && Board.Squares[from.File, nextRank + direction].Piece == null)
+                    if (
+                        from.Rank == firstPawnRank
+                        && Board.Squares[from.File, nextRank + direction].Piece == null
+                    )
                         squares.Add(new SquareCoords(from.File, nextRank + direction));
                 }
                 if (IsInsideBoard(from.File + 1))
                 {
-                    if (IsEnemyPieceOnSquare(pieceColor, from.File + 1, nextRank)
-                        || IsEnPassantSquare(from.File + 1, nextRank))
+                    if (
+                        IsEnemyPieceOnSquare(pieceColor, from.File + 1, nextRank)
+                        || IsEnPassantSquare(from.File + 1, nextRank)
+                    )
                         squares.Add(new SquareCoords(from.File + 1, nextRank));
                 }
                 if (IsInsideBoard(from.File - 1))
                 {
-                    if (IsEnemyPieceOnSquare(pieceColor, from.File - 1, nextRank)
-                        || IsEnPassantSquare(from.File - 1, nextRank))
+                    if (
+                        IsEnemyPieceOnSquare(pieceColor, from.File - 1, nextRank)
+                        || IsEnPassantSquare(from.File - 1, nextRank)
+                    )
                         squares.Add(new SquareCoords(from.File - 1, nextRank));
                 }
             }
@@ -610,8 +700,10 @@ namespace ChessGameLibrary
             List<SquareCoords> squares = new List<SquareCoords>();
             for (int i = 0; i < Utils.KnightMoveCoordsX.Length; i++)
             {
-                int X = Utils.KnightMoveCoordsX[i], Y = Utils.KnightMoveCoordsY[i];
-                int newFile = from.File + X, newRank = from.Rank + Y;
+                int X = Utils.KnightMoveCoordsX[i],
+                    Y = Utils.KnightMoveCoordsY[i];
+                int newFile = from.File + X,
+                    newRank = from.Rank + Y;
                 if (IsInsideBoard(newFile, newRank))
                 {
                     Piece p = Board.Squares[newFile, newRank].Piece;

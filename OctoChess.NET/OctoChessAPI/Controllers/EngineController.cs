@@ -3,6 +3,7 @@ using OctoChessAPI.DTO;
 using OctoChessEngine;
 using OctoChessEngine.Domain;
 using OctoChessEngine.Enums;
+using System.Text.Json;
 
 namespace OctoChessAPI.Controllers
 {
@@ -10,25 +11,48 @@ namespace OctoChessAPI.Controllers
     [ApiController]
     public class EngineController : ControllerBase
     {
-        private readonly OctoChess _octoChess = new();
+        private readonly OctoChess _octoChess;
 
-        [Route("bestMove/{fen}")]
+        public EngineController(OctoChess octoChess)
+        {
+            _octoChess = octoChess;
+        }
+
+        [Route("bestMove")]
         [HttpGet]
         public async Task<ActionResult<MoveEvalDTO>> GetBestMove(
             string fen,
+            int depth = 3,
+            bool useAlphaBetaPruning = true,
             EvaluationType evaluationType = EvaluationType.MATERIAL,
+            bool useIterativeDeepening = true,
+            int timeLimit = 30,
+            bool useQuiescenceSearch = true,
+            int maxQuiescenceDepth = 5,
             CancellationToken cancellationToken = default
         )
         {
-            _octoChess.SetFenPosition(fen);
+            string decodedFen = System.Web.HttpUtility.UrlDecode(fen);
+            _octoChess.SetFenPosition(decodedFen);
             MoveEval bestMove = await _octoChess.BestMove(
-                depth: 3,
-                useAlphaBetaPruning: true,
-                cancellationToken: cancellationToken,
-                evaluationType: evaluationType
+                maxDepth: depth,
+                useAlphaBetaPruning: useAlphaBetaPruning,
+                evaluationType: evaluationType,
+                useIterativeDeepening: useIterativeDeepening,
+                timeLimit: timeLimit,
+                useQuiescenceSearch: useQuiescenceSearch,
+                maxQuiescenceDepth: maxQuiescenceDepth,
+                cancellationToken: cancellationToken
             );
             MoveEvalDTO moveEvalDTO = new(bestMove);
-            return Ok(moveEvalDTO);
+            string jsonMove = JsonSerializer.Serialize(moveEvalDTO);
+            Console.WriteLine(
+                $"Best move: {bestMove.From}-{bestMove.To}{(bestMove.PromotedTo != ChessGameLibrary.Enums.PieceType.NONE ? bestMove.PromotedTo : "")}"
+            );
+            //Console.Write(
+            //    $"{bestMove.From}{bestMove.To}{(bestMove.PromotedTo != ChessGameLibrary.Enums.PieceType.NONE ? bestMove.PromotedTo : "")} "
+            //);
+            return Ok(jsonMove);
         }
     }
 }

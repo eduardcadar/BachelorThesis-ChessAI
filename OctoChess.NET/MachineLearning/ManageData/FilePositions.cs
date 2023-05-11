@@ -11,6 +11,12 @@
             Results = Array.Empty<float>();
         }
 
+        public FilePositions(float[,] positions)
+        {
+            Positions = positions;
+            Results = Array.Empty<float>();
+        }
+
         public FilePositions(float[,] positions, float[] results)
         {
             if (positions.GetLength(0) != results.Length)

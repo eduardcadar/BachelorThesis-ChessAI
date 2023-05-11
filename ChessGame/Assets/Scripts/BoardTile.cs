@@ -1,8 +1,9 @@
+using Assets.Scripts;
 using ChessGameLibrary;
 using ChessGameLibrary.Enums;
 using System.Collections;
 using System.Linq;
-using System.Threading;
+using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -19,17 +20,17 @@ public class BoardTile : MonoBehaviour
         {
             if (_finishedMove)
             {
-                //switch (Chessboard.Game.PlayerToMove)
-                //{
-                //    case PieceColor.WHITE:
-                //        if (!Chessboard.IsPlayerWhiteHuman)
-                //            StartCoroutine(EngineMove());
-                //        break;
-                //    case PieceColor.BLACK:
-                //        if (!Chessboard.IsPlayerBlackHuman)
-                //            StartCoroutine(EngineMove());
-                //        break;
-                //}
+                switch (Chessboard.Game.PlayerToMove)
+                {
+                    case PieceColor.WHITE:
+                        if (!Chessboard.IsPlayerWhiteHuman)
+                            EngineMove();
+                        break;
+                    case PieceColor.BLACK:
+                        if (!Chessboard.IsPlayerBlackHuman)
+                            EngineMove();
+                        break;
+                }
             }
         }
     }
@@ -45,7 +46,8 @@ public class BoardTile : MonoBehaviour
         else
         {
             BoardTile clickedSquare = this;
-            var validMoveSq = clickedSquare.GetComponentsInChildren<Transform>()
+            var validMoveSq = clickedSquare
+                .GetComponentsInChildren<Transform>()
                 .SingleOrDefault(c => c.name.Contains("ValidMoveSquare"));
             // if click on validMoveSquare move the selected piece
             if (validMoveSq != null)
@@ -62,14 +64,28 @@ public class BoardTile : MonoBehaviour
         }
     }
 
-    IEnumerator EngineMove()
+    async void EngineMove()
     {
         _finishedMove = false;
-        yield return new WaitForSecondsRealtime(Chessboard.TIME_BEFORE_ENGINE_MOVES);
-        int i = Random.Range(0, Chessboard.Game.LegalMoves.Count);
-        SimpleMove move = Chessboard.Game.LegalMoves[i];
+        await Task.Yield();
+        //return new WaitForSecondsRealtime(Chessboard.TIME_BEFORE_ENGINE_MOVES);
+
+        Debug.Log("engine searching for move...");
+        SimpleMove move = await EngineUtils.GetEngineBestMove(
+            fen: Chessboard.Game.GetBoardFEN(),
+            depth: 3,
+            useAlphaBetaPruning: true,
+            useIterativeDeepening: false,
+            timeLimit: 50,
+            useQuiescenceSearch: false,
+            maxQuiescenceDepth: 2,
+            evaluationType: EngineUtils.EvaluationType.TRAINED_MODEL
+        );
+
+        //int i = Random.Range(0, Chessboard.Game.LegalMoves.Count);
+        //SimpleMove move = Chessboard.Game.LegalMoves[i];
         Debug.Log("ENGINE MOVE: " + move.ToString());
-        MoveInfo moveInfo = Chessboard.Game.Move(move.From, move.To);
+        MoveInfo moveInfo = Chessboard.Game.Move(move.From, move.To, promotedTo: move.PromotedTo);
         MoveOnBoard(moveInfo);
 
         if (Chessboard.Game.State != GameState.INPROGRESS)
@@ -86,7 +102,8 @@ public class BoardTile : MonoBehaviour
         else if (move.MoveType == MoveType.ENPASSANT)
         {
             int direction = move.Piece.Color == PieceColor.WHITE ? 1 : -1;
-            Piece capturedPawn = Chessboard.GetTile(move.To.File, move.To.Rank - direction)
+            Piece capturedPawn = Chessboard
+                .GetTile(move.To.File, move.To.Rank - direction)
                 .GetComponentInChildren<Piece>();
             Destroy(capturedPawn.PieceGameObject);
         }
@@ -101,7 +118,12 @@ public class BoardTile : MonoBehaviour
 
         if (move.MoveType == MoveType.PROMOTION)
         {
-            Chessboard.InstantiatePiece(move.PromotedTo, move.Piece.Color, move.To.File, move.To.Rank);
+            Chessboard.InstantiatePiece(
+                move.PromotedTo,
+                move.Piece.Color,
+                move.To.File,
+                move.To.Rank
+            );
             Destroy(pieceToMove.PieceGameObject);
         }
         else
@@ -117,14 +139,16 @@ public class BoardTile : MonoBehaviour
         if (Chessboard.SelectPromotionPieceW.gameObject.activeSelf)
             return;
         Chessboard.RemoveThreatMap();
+        if (Chessboard.Game.State != GameState.INPROGRESS)
+            return;
         switch (Chessboard.Game.PlayerToMove)
         {
             case PieceColor.WHITE:
-                //if (Chessboard.IsPlayerWhiteHuman)
+                if (Chessboard.IsPlayerWhiteHuman)
                     HumanMove();
                 break;
             case PieceColor.BLACK:
-                //if (Chessboard.IsPlayerBlackHuman)
+                if (Chessboard.IsPlayerBlackHuman)
                     HumanMove();
                 break;
         }
@@ -135,11 +159,15 @@ public class BoardTile : MonoBehaviour
         Chessboard.SelectedSquare = Instantiate(Chessboard.SelectedSquarePrefab, transform);
         Chessboard.SelectedSquare.AddComponent<SpriteRenderer>().sortingLayerName = "Tiles";
 
-        SquareCoords[] validMoveSquares = Chessboard.Game.MoveSquares(new SquareCoords(x, y))
+        SquareCoords[] validMoveSquares = Chessboard.Game
+            .MoveSquares(new SquareCoords(x, y))
             .ToArray();
         foreach (SquareCoords sq in validMoveSquares)
         {
-            GameObject validSquare = Instantiate(Chessboard.ValidMoveSquarePrefab, Chessboard.GetTile(sq.File, sq.Rank).transform);
+            GameObject validSquare = Instantiate(
+                Chessboard.ValidMoveSquarePrefab,
+                Chessboard.GetTile(sq.File, sq.Rank).transform
+            );
             validSquare.AddComponent<SpriteRenderer>().sortingLayerName = "Tiles";
             Chessboard.ValidMoves.Add(validSquare);
         }
@@ -158,7 +186,9 @@ public class BoardTile : MonoBehaviour
 
     IEnumerator SelectPromotionPiece(BoardTile clickedSquare, Piece pieceToMove)
     {
-        yield return new WaitWhile(() => Chessboard.SelectPromotionPieceW.PieceType == PieceType.NONE);
+        yield return new WaitWhile(
+            () => Chessboard.SelectPromotionPieceW.PieceType == PieceType.NONE
+        );
         Chessboard.SelectPromotionPieceW.gameObject.SetActive(false);
         Debug.Log("Promotion piece selected: " + Chessboard.SelectPromotionPieceW.PieceType);
         ContinueMove(clickedSquare, pieceToMove);
@@ -178,15 +208,19 @@ public class BoardTile : MonoBehaviour
     {
         PieceType promotedTo = Chessboard.SelectPromotionPieceW.PieceType;
         var fromTile = Chessboard.SelectedSquare.transform.parent.ConvertTo<BoardTile>();
-        MoveInfo moveInfo = Chessboard.Game.Move(new SquareCoords(fromTile.x, fromTile.y), new SquareCoords(x, y),
-            promotedTo);
+        MoveInfo moveInfo = Chessboard.Game.Move(
+            new SquareCoords(fromTile.x, fromTile.y),
+            new SquareCoords(x, y),
+            promotedTo
+        );
         Piece pieceToCapture = clickedSquare.GetComponentInChildren<Piece>();
         if (pieceToCapture != null)
             Destroy(pieceToCapture.PieceGameObject);
         else if (moveInfo.MoveType == MoveType.ENPASSANT)
         {
             int direction = moveInfo.Piece.Color == PieceColor.WHITE ? 1 : -1;
-            Piece capturedPawn = Chessboard.GetTile(moveInfo.To.File, moveInfo.To.Rank - direction)
+            Piece capturedPawn = Chessboard
+                .GetTile(moveInfo.To.File, moveInfo.To.Rank - direction)
                 .GetComponentInChildren<Piece>();
             Destroy(capturedPawn.PieceGameObject);
         }
@@ -227,7 +261,8 @@ public class BoardTile : MonoBehaviour
 
     private void MovePiece(BoardTile clickedSquare)
     {
-        Piece pieceToMove = Chessboard.SelectedSquare.transform.parent.GetComponentInChildren<Piece>();
+        Piece pieceToMove =
+            Chessboard.SelectedSquare.transform.parent.GetComponentInChildren<Piece>();
         int lastPawnRank = pieceToMove.LibraryPiece.Color == PieceColor.WHITE ? 7 : 0;
         if (pieceToMove.LibraryPiece.Type == PieceType.PAWN && clickedSquare.y == lastPawnRank)
         {
