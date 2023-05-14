@@ -78,7 +78,7 @@ public class BoardTile : MonoBehaviour
             useIterativeDeepening: false,
             timeLimit: 50,
             useQuiescenceSearch: false,
-            maxQuiescenceDepth: 2,
+            maxQuiescenceDepth: 4,
             evaluationType: EngineUtils.EvaluationType.TRAINED_MODEL
         );
 
