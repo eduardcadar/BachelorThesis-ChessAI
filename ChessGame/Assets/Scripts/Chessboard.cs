@@ -1,6 +1,7 @@
 using ChessGameLibrary;
 using ChessGameLibrary.Enums;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using static Assets.Scripts.EngineUtils;
 
@@ -53,6 +54,8 @@ public class Chessboard : MonoBehaviour
     [SerializeField]
     private GameObject KingW;
 
+    public GameObject PlayerToMoveText;
+
     public Game Game;
     public bool IsPlayerWhiteHuman { get; set; } = true;
     public bool IsPlayerBlackHuman { get; set; } = true;
@@ -82,11 +85,19 @@ public class Chessboard : MonoBehaviour
         selectedMaterial.color = Color.red;
         GenerateAllTiles(TILE_COUNT_X, TILE_COUNT_Y);
         //int ok = GenerateClassicPieces();
-        string FEN = Utils.STARTING_FEN;
         //string FEN = "rnbqkbnr/P3pppp/2pp4/8/8/8/PP1PPPPP/RNBQKBNR w KQkq - 0 5";
+        InitializeBoard();
+    }
+
+    public void InitializeBoard()
+    {
+        ClearBoardOfPieces();
+        string FEN = Utils.STARTING_FEN;
         Game = new();
         //Game.SetPlayerTypes(PlayerType.HUMAN, PlayerType.STOCKFISH);
         Game.SetPositionFromFEN(FEN);
+        PlayerToMoveText.GetComponent<TextMeshProUGUI>().text =
+            Game.PlayerToMove.ToString() + " to move";
         int ok = GeneratePiecesFromFEN(FEN);
         if (ok < 0)
         {
@@ -133,6 +144,16 @@ public class Chessboard : MonoBehaviour
     public GameObject GetTile(SquareCoords sq)
     {
         return tiles[sq.File, sq.Rank];
+    }
+
+    private void ClearBoardOfPieces()
+    {
+        foreach (GameObject tile in tiles)
+        {
+            Piece piece = tile.GetComponentInChildren<Piece>();
+            if (piece != null)
+                Destroy(piece.PieceGameObject);
+        }
     }
 
     private int GeneratePiecesFromFEN(string FEN)

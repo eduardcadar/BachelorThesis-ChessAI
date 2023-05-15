@@ -21,6 +21,12 @@ public class ButtonBehaviour : MonoBehaviour
         chessboard.RefreshThreatMap();
     }
 
+    public void RestartGame()
+    {
+        Chessboard chessboard = GetComponentInChildren<Chessboard>();
+        chessboard.InitializeBoard();
+    }
+
     private void InitializeChessboard()
     {
         Chessboard = transform.GetComponentInChildren<Chessboard>();

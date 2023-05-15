@@ -4,6 +4,7 @@ using ChessGameLibrary.Enums;
 using System.Collections;
 using System.Linq;
 using System.Threading.Tasks;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -63,6 +64,10 @@ public class BoardTile : MonoBehaviour
             return;
         }
     }
+
+    private void UpdatePlayerToMoveText() =>
+        Chessboard.PlayerToMoveText.GetComponent<TextMeshProUGUI>().text =
+            Chessboard.Game.PlayerToMove.ToString() + " to move";
 
     async void EngineMove()
     {
@@ -132,6 +137,7 @@ public class BoardTile : MonoBehaviour
             pieceToMove.transform.parent = boardTileTo.transform;
             pieceToMove.transform.position = boardTileTo.transform.position;
         }
+        UpdatePlayerToMoveText();
     }
 
     private void OnMouseDown()
@@ -248,15 +254,7 @@ public class BoardTile : MonoBehaviour
         if (Chessboard.Game.State != GameState.INPROGRESS)
             Debug.Log(Chessboard.Game.State);
         DestroySelectedAndValidSquares();
-        //switch (Chessboard.Game.PlayerToMove)
-        //{
-        //    case PieceColor.WHITE:
-        //        if (!Chessboard.IsPlayerWhiteHuman) EngineMove();
-        //        break;
-        //    case PieceColor.BLACK:
-        //        if (!Chessboard.IsPlayerBlackHuman) EngineMove();
-        //        break;
-        //}
+        UpdatePlayerToMoveText();
     }
 
     private void MovePiece(BoardTile clickedSquare)
