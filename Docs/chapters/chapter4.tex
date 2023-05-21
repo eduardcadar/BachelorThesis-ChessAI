@@ -39,7 +39,7 @@ A simple pseudocode for Alpha-beta pruning is shown in fig. \ref{fig:alphabetaPs
   \label{fig:alphabetaPseudocode}
 \end{figure}
 
-The heuristic I used in combination with Alpha-beta pruning is MVV-LVA (Most Valuable Victim - Least Valuable Agressor): the moves that capture pieces with high values are first, and if multiple moves capture a piece of the same value, the moves with the least valuable agressor are prioritized \cite{mvv-lva}. The heuristic is based on the observation that in chess, it is often advantageous to capture pieces of higher value than the capturing piece, while avoiding exchanges where the capturing piece is more valuable than the captured piece. It is also relatively easy to implement, and does not require much computational overhead. Other heuristics, use the evaluations of previous searches or the results from other branches, and require maintaining and updating additional data structures to keep track of the move history and their performance.
+The heuristic I used in combination with Alpha-beta pruning is MVV-LVA (Most Valuable Victim - Least Valuable Agressor): the moves that capture pieces with high values are first, and if multiple moves capture a piece of the same value, the moves with the least valuable agressor are prioritized \cite{mvv-lva}. The heuristic is based on the observation that in chess, it is often advantageous to capture pieces of higher value than the capturing piece, while avoiding exchanges where the capturing piece is more valuable than the captured piece. It is also relatively easy to implement, and does not require much computational overhead. Other heuristics use the evaluations of previous searches or the results from other branches, and require maintaining and updating additional data structures to keep track of the move history and their performance.
 
 \subsection{Quiescence search}
 \label{subsec:ch4sec2subsec2}
@@ -151,7 +151,7 @@ $4,1,0,0,0,0,7,10,2,1,0,0,0,0,7,8,3,1,0,0,0,0,7,9,5,1,0,0,0,0,7,11,6,1,0,$
 
 $0,0,0,7,12,3,1,0,0,0,0,7,9,2,1,0,0,0,0,7,8,4,1,0,0,0,0,7,10,1,1,1,1,-1,0$
 
-The input layer contains 70 nodes. The first 64 values describe the positions of the pieces (first 8 values are the pieces on a1, a2, a3, ..., a8, then b1, b2, b3, ..., b8, etc.) - each square is assigned a value based on the piece it contains (see fig. \ref{fig:squaresEncodedValues}). The next 4 values are boolean (0 - false, 1 - true) and encode the castling rights (white can castle kingside, white can castle queenside, black can castle kingside, and black can castle queenside). The next value is the en passant file (the file of the moved pawn, encoded from 0 to 7, if the last move pushed a pawn two squares, -1 otherwise). The last value is the player to move (0 for white, 1 for black).
+The input layer contains 70 nodes. The first 64 values describe the positions of the pieces (first 8 values are the pieces on a1, a2, a3, ..., a8, then b1, b2, b3, ..., b8, etc.) - each square is assigned a value based on the piece it contains (see fig. \ref{fig:squaresEncodedValues}).
 
 \begin{figure}[h]
     \centering
@@ -160,13 +160,15 @@ The input layer contains 70 nodes. The first 64 values describe the positions of
     \label{fig:squaresEncodedValues}
 \end{figure}
 
+The next 4 values are boolean (0 - false, 1 - true) and encode the castling rights (white can castle kingside, white can castle queenside, black can castle kingside, and black can castle queenside). The next value is the en passant file (the file of the moved pawn, encoded to a value from 0 to 7, if the last move pushed a pawn two squares, -1 otherwise). The last value is the player to move in the current position (0 for white, 1 for black).
+
 There is only one hidden layer, with 32 nodes, with a Rectified Linear Unit (ReLU) activation function.
 
-The output layer contains one node, the evaluation of the position, with a hyperbolic tangent (Tanh) activation function, so the output is between -1 and 1.
+The output layer contains one node, the evaluation of the position determined by the neural network, with a hyperbolic tangent (Tanh) activation function, so the output is between -1 and 1.
 
 \subsubsection{Training}
 \label{subsec:ch4sec3subsec2subsubsec3}
 
 % 100 epoci, batch-size 64
 
-The model was trained for 100 epochs, on a batch-size of 64, using Stochastic Gradient Descent (SGD) as an optimizer and Mean Squared Error (MSE) as a loss function.
+The model was trained for 100 epochs, on a batch-size of 64, using Stochastic Gradient Descent (SGD) as the optimizer and Mean Squared Error (MSE) as the loss function.

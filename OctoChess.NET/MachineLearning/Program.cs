@@ -1,7 +1,7 @@
 ﻿using MachineLearning;
 using MachineLearning.ManageData;
 
-string player = "player";
+//string player = "player";
 
 // PGN FILE -> PGN GAMES -> ENCODE POSITIONS -> ENCODED POSITIONS FILE -> TRAIN MODEL ON ENCODED POSITIONS
 // THEN TEST MODEL ON POSITIONS EVALS
@@ -16,19 +16,25 @@ string player = "player";
 //        DataManager.WritePGNGameToFile(encodedPositionsFile, pgnGame);
 //}
 
-// FOR SAME POSITION MAKE A MEAN OF THE RESULTS (LOSSES+WINS+DRAWS)
-FilePositions fp = DataManager.GetMeanOfPositionResults(DataUtils.DataDirectory);
+internal class Program
+{
+    private static void Main(string[] args)
+    {
+        MachineLearningModel model = new MachineLearningModel();
+        model.InitializeModel();
 
-// TRAIN MODEL
-MachineLearningModel model = new();
+        // FOR SAME POSITION MAKE A MEAN OF THE RESULTS (LOSSES+WINS+DRAWS)
+        FilePositions fp = DataManager.GetMeanOfPositionResults(DataUtils.DataDirectory);
 
-model.LoadModel();
+        // TRAIN MODEL
+        //model.LoadModel();
 
-//model.InitializeModel();
-model.Train(fp.Positions, fp.Results, batch_size: 64, epochs: 100, validation_split: 0.1f);
+        model.Train(fp.Positions, fp.Results, batch_size: 64, epochs: 100, validation_split: 0.1f);
 
-// SAVE MODEL
-model.SaveModel();
+        // SAVE MODEL
+        model.SaveModel();
+    }
+}
 
 // GET POSITIONS EVALS (for testing model) from folder
 //

@@ -59,71 +59,6 @@
         }
       }
     },
-    "C:\\facultate\\BachelorThesis-ChessAI\\OctoChess.NET\\MachineLearning\\MachineLearning.csproj": {
-      "version": "1.0.0",
-      "restore": {
-        "projectUniqueName": "C:\\facultate\\BachelorThesis-ChessAI\\OctoChess.NET\\MachineLearning\\MachineLearning.csproj",
-        "projectName": "MachineLearning",
-        "projectPath": "C:\\facultate\\BachelorThesis-ChessAI\\OctoChess.NET\\MachineLearning\\MachineLearning.csproj",
-        "packagesPath": "C:\\Users\\edyed\\.nuget\\packages\\",
-        "outputPath": "C:\\facultate\\BachelorThesis-ChessAI\\OctoChess.NET\\MachineLearning\\obj\\",
-        "projectStyle": "PackageReference",
-        "configFilePaths": [
-          "C:\\Users\\edyed\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
-        ],
-        "originalTargetFrameworks": [
-          "net7.0"
-        ],
-        "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "https://api.nuget.org/v3/index.json": {}
-        },
-        "frameworks": {
-          "net7.0": {
-            "targetAlias": "net7.0",
-            "projectReferences": {
-              "C:\\facultate\\BachelorThesis-ChessAI\\ChessGameLibrary\\ChessGameLibrary.csproj": {
-                "projectPath": "C:\\facultate\\BachelorThesis-ChessAI\\ChessGameLibrary\\ChessGameLibrary.csproj"
-              }
-            }
-          }
-        },
-        "warningProperties": {
-          "warnAsError": [
-            "NU1605"
-          ]
-        }
-      },
-      "frameworks": {
-        "net7.0": {
-          "targetAlias": "net7.0",
-          "dependencies": {
-            "Keras.NET": {
-              "target": "Package",
-              "version": "[3.8.5, )"
-            }
-          },
-          "imports": [
-            "net461",
-            "net462",
-            "net47",
-            "net471",
-            "net472",
-            "net48",
-            "net481"
-          ],
-          "assetTargetFallback": true,
-          "warn": true,
-          "frameworkReferences": {
-            "Microsoft.NETCore.App": {
-              "privateAssets": "all"
-            }
-          },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
-        }
-      }
-    },
     "C:\\facultate\\BachelorThesis-ChessAI\\OctoChess.NET\\OctoChessAPI\\OctoChessAPI.csproj": {
       "version": "1.0.0",
       "restore": {
@@ -169,11 +104,11 @@
           "dependencies": {
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
-              "version": "[7.0.3, )"
+              "version": "[7.0.5, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
-              "version": "[6.4.0, )"
+              "version": "[6.5.0, )"
             }
           },
           "imports": [
@@ -213,21 +148,18 @@
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net7.0"
+          "netcoreapp3.1"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net7.0": {
-            "targetAlias": "net7.0",
+          "netcoreapp3.1": {
+            "targetAlias": "netcoreapp3.1",
             "projectReferences": {
               "C:\\facultate\\BachelorThesis-ChessAI\\ChessGameLibrary\\ChessGameLibrary.csproj": {
                 "projectPath": "C:\\facultate\\BachelorThesis-ChessAI\\ChessGameLibrary\\ChessGameLibrary.csproj"
-              },
-              "C:\\facultate\\BachelorThesis-ChessAI\\OctoChess.NET\\MachineLearning\\MachineLearning.csproj": {
-                "projectPath": "C:\\facultate\\BachelorThesis-ChessAI\\OctoChess.NET\\MachineLearning\\MachineLearning.csproj"
               }
             }
           }
@@ -239,8 +171,8 @@
         }
       },
       "frameworks": {
-        "net7.0": {
-          "targetAlias": "net7.0",
+        "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
           "imports": [
             "net461",
             "net462",

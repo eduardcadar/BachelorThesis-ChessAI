@@ -4,7 +4,6 @@ using ChessGameLibrary.Enums;
 using System.Collections;
 using System.Linq;
 using System.Threading.Tasks;
-using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -65,10 +64,6 @@ public class BoardTile : MonoBehaviour
         }
     }
 
-    private void UpdatePlayerToMoveText() =>
-        Chessboard.PlayerToMoveText.GetComponent<TextMeshProUGUI>().text =
-            Chessboard.Game.PlayerToMove.ToString() + " to move";
-
     async void EngineMove()
     {
         _finishedMove = false;
@@ -76,16 +71,7 @@ public class BoardTile : MonoBehaviour
         //return new WaitForSecondsRealtime(Chessboard.TIME_BEFORE_ENGINE_MOVES);
 
         Debug.Log("engine searching for move...");
-        SimpleMove move = await EngineUtils.GetEngineBestMove(
-            fen: Chessboard.Game.GetBoardFEN(),
-            depth: 3,
-            useAlphaBetaPruning: true,
-            useIterativeDeepening: false,
-            timeLimit: 50,
-            useQuiescenceSearch: false,
-            maxQuiescenceDepth: 4,
-            evaluationType: EngineUtils.EvaluationType.TRAINED_MODEL
-        );
+        SimpleMove move = await EngineUtils.GetEngineBestMove(fen: Chessboard.Game.GetBoardFEN());
 
         //int i = Random.Range(0, Chessboard.Game.LegalMoves.Count);
         //SimpleMove move = Chessboard.Game.LegalMoves[i];
@@ -137,7 +123,8 @@ public class BoardTile : MonoBehaviour
             pieceToMove.transform.parent = boardTileTo.transform;
             pieceToMove.transform.position = boardTileTo.transform.position;
         }
-        UpdatePlayerToMoveText();
+        Chessboard.UpdatePlayerToMoveText();
+        Chessboard.UpdateGameStateText();
     }
 
     private void OnMouseDown()
@@ -254,7 +241,8 @@ public class BoardTile : MonoBehaviour
         if (Chessboard.Game.State != GameState.INPROGRESS)
             Debug.Log(Chessboard.Game.State);
         DestroySelectedAndValidSquares();
-        UpdatePlayerToMoveText();
+        Chessboard.UpdatePlayerToMoveText();
+        Chessboard.UpdateGameStateText();
     }
 
     private void MovePiece(BoardTile clickedSquare)

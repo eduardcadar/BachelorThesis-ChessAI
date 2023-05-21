@@ -21,6 +21,7 @@ namespace ChessGameLibrary
         public int HalfmoveClock;
         public int MovesCount;
         public Dictionary<string, int> Positions = new Dictionary<string, int>();
+        private int _piecesCount;
         public bool IsOver
         {
             get { return State != GameState.INPROGRESS; }
@@ -37,6 +38,7 @@ namespace ChessGameLibrary
 
         public bool SetPositionFromFEN(string fen)
         {
+            _piecesCount = 0;
             Positions[""] = 0;
             Board = new Board();
             string[] fields = fen.Split(' ');
@@ -45,12 +47,15 @@ namespace ChessGameLibrary
             foreach (char letter in fields[0])
             {
                 if (Utils.PieceLetters.Contains(letter))
+                {
+                    _piecesCount++;
                     AddPieceToBoard(
                         Utils.GetPieceTypeFromPieceLetter(letter),
                         Utils.GetPieceColorFromPieceLetter(letter),
                         file,
                         rank
                     );
+                }
                 else if (letter == '/')
                 {
                     rank--;
@@ -218,7 +223,10 @@ namespace ChessGameLibrary
                 Board.Squares[to.File, to.Rank - direction].Piece = moveToUndo.CapturedPiece;
             }
             else if (moveToUndo.CapturedPiece != null)
+            {
+                _piecesCount++;
                 Board.Squares[to.File, to.Rank].Piece = moveToUndo.CapturedPiece;
+            }
             if (moveToUndo.MoveType == MoveType.CASTLE) // if castle move, also move the rook back
             {
                 SimpleMove rookMove = Utils.GetRookCastleMove(to);
@@ -317,7 +325,10 @@ namespace ChessGameLibrary
             if (piece.Type == PieceType.PAWN && Math.Abs(from.Rank - to.Rank) == 2)
                 EnPassantSquare = new SquareCoords(from.File, (from.Rank + to.Rank) / 2);
             if (toSq.Piece != null)
+            {
+                _piecesCount--;
                 moveInfo.CapturedPiece = new Piece(toSq.Piece.Type, toSq.Piece.Color);
+            }
             toSq.Piece = piece;
             fromSq.Piece = null;
             if (Utils.IsPromotionMove(piece, to))
@@ -384,6 +395,11 @@ namespace ChessGameLibrary
         {
             PieceColor otherPlayer =
                 PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
+            if (_piecesCount == 2)
+            {
+                State = GameState.DRAW;
+                return;
+            }
             if (LegalMoves.Count == 0)
             {
                 Square sq = Board.Squares
@@ -399,8 +415,8 @@ namespace ChessGameLibrary
                 else
                     State = GameState.STALEMATE;
             }
-            else if (Positions[positionString] >= 3)
-                State = GameState.DRAW;
+            //else if (Positions[positionString] >= 3)
+            //    State = GameState.DRAW;
             else
                 State = GameState.INPROGRESS;
         }

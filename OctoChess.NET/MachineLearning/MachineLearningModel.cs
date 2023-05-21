@@ -3,6 +3,8 @@ using Keras.Layers;
 using Keras.Models;
 using MachineLearning.ManageData;
 using Numpy;
+using System;
+using System.IO;
 
 namespace MachineLearning
 {
@@ -20,7 +22,7 @@ namespace MachineLearning
 
         public void InitializeModel()
         {
-            Sequential model = new();
+            Sequential model = new Sequential();
             model.Add(new Dense(32, activation: "relu", input_shape: new Shape(70)));
             model.Add(new Dense(1, activation: "tanh"));
             model.Compile(optimizer: Optimizer, loss: Loss, metrics: Metrics);
@@ -64,8 +66,10 @@ namespace MachineLearning
             _model.Compile(optimizer: Optimizer, loss: Loss, metrics: Metrics);
         }
 
-        public float[] Predict(float[,] positions) =>
-            _model.Predict(positions, verbose: 0).GetData<float>();
+        public float[] Predict(float[,] positions)
+        {
+            return _model.Predict(positions, verbose: 0).GetData<float>();
+        }
 
         public void Evaluate(float[,] positions, float[] results, int batch_size = 2)
         {

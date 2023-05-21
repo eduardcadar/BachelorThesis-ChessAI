@@ -1,10 +1,12 @@
-﻿namespace MachineLearning.ManageData
+﻿using System;
+
+namespace MachineLearning.ManageData
 {
     public class PositionsEvals
     {
         public float[,] Positions { get; set; }
         public float[] Evals { get; set; }
-        public string? BestMove { get; set; }
+        public string BestMove { get; set; }
 
         public PositionsEvals()
         {

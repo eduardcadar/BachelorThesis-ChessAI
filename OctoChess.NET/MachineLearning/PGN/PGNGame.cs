@@ -17,12 +17,11 @@ namespace MachineLearning.PGN
 
         public override string ToString()
         {
-            StringBuilder sb = new();
+            StringBuilder sb = new StringBuilder();
             sb.Append(Moves.Length).Append(" moves: ");
             foreach (PGNMove move in Moves)
             {
-                sb.Append(move.ToString())
-                    .Append(' ');
+                sb.Append(move.ToString()).Append(' ');
             }
             sb.Append(GameResult.ToString());
             return sb.ToString();

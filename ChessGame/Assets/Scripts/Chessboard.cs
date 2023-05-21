@@ -1,6 +1,7 @@
 using ChessGameLibrary;
 using ChessGameLibrary.Enums;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using static Assets.Scripts.EngineUtils;
@@ -55,6 +56,10 @@ public class Chessboard : MonoBehaviour
     private GameObject KingW;
 
     public GameObject PlayerToMoveText;
+    public GameObject GameStateText;
+    public GameObject DepthInput;
+    public GameObject TimeLimitInput;
+    public GameObject QuiescenceDepthInput;
 
     public Game Game;
     public bool IsPlayerWhiteHuman { get; set; } = true;
@@ -86,8 +91,16 @@ public class Chessboard : MonoBehaviour
         GenerateAllTiles(TILE_COUNT_X, TILE_COUNT_Y);
         //int ok = GenerateClassicPieces();
         //string FEN = "rnbqkbnr/P3pppp/2pp4/8/8/8/PP1PPPPP/RNBQKBNR w KQkq - 0 5";
+        Task.Run(async () => await PrepareEngine());
         InitializeBoard();
     }
+
+    public void UpdatePlayerToMoveText() =>
+        PlayerToMoveText.GetComponent<TextMeshProUGUI>().text =
+            Game.PlayerToMove.ToString() + " to move";
+
+    public void UpdateGameStateText() =>
+        GameStateText.GetComponent<TextMeshProUGUI>().text = "Game state: " + Game.State.ToString();
 
     public void InitializeBoard()
     {
@@ -96,8 +109,8 @@ public class Chessboard : MonoBehaviour
         Game = new();
         //Game.SetPlayerTypes(PlayerType.HUMAN, PlayerType.STOCKFISH);
         Game.SetPositionFromFEN(FEN);
-        PlayerToMoveText.GetComponent<TextMeshProUGUI>().text =
-            Game.PlayerToMove.ToString() + " to move";
+        UpdatePlayerToMoveText();
+        UpdateGameStateText();
         int ok = GeneratePiecesFromFEN(FEN);
         if (ok < 0)
         {

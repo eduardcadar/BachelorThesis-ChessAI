@@ -1,4 +1,6 @@
-﻿namespace MachineLearning.ManageData
+﻿using System;
+
+namespace MachineLearning.ManageData
 {
     public class FilePositions
     {

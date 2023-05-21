@@ -5,6 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
     <StartupObject></StartupObject>
+    <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
 
 </Project>

@@ -1,5 +1,9 @@
 ﻿using ChessGameLibrary;
 using ChessGameLibrary.Enums;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -7,7 +11,7 @@ namespace MachineLearning.PGN
 {
     public static partial class PGNParser
     {
-        private static Game _game = new();
+        private static Game _game = new Game();
 
         //private static readonly string _lineSeparator = "\n";
 
@@ -35,7 +39,7 @@ namespace MachineLearning.PGN
                     gameTags.Single(t => t.Key.Equals("Result")).Value
                 );
 
-                yield return new(gameTags, moves, result);
+                yield return new PGNGame(gameTags, moves, result);
             }
         }
 
@@ -55,25 +59,24 @@ namespace MachineLearning.PGN
 
         private static PGNMove[] GetPGNMovesFromMovesText(string movesText)
         {
-            _game = new();
+            _game = new Game();
             _game.SetPositionFromFEN(Utils.STARTING_FEN);
             string movesString = Regex.Replace(movesText, "(\r\n)|(\n)", " ");
             movesString = Regex.Replace(movesString, @"[0-9]+\.", " ").Trim();
             movesString = Regex.Replace(movesString, @"[ ]{2,}", " ");
             return movesString
-                .Split(' ', StringSplitOptions.TrimEntries & StringSplitOptions.RemoveEmptyEntries)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries) // & StringSplitOptions.TrimEntries
                 .Select(GetPGNMoveFromMoveText)
                 .ToArray();
         }
 
         private static PGNMove GetPGNMoveFromMoveText(string moveText)
         {
-            PGNMove pgnMove =
-                new()
-                {
-                    IsCheck = moveText[^1] == '+' || moveText[^1] == '#',
-                    IsCheckMate = moveText[^1] == '#'
-                };
+            PGNMove pgnMove = new PGNMove()
+            {
+                IsCheck = moveText[^1] == '+' || moveText[^1] == '#',
+                IsCheckMate = moveText[^1] == '#'
+            };
             if (pgnMove.IsCheck)
                 moveText = moveText[..^1];
             if (IsCastleMove(moveText))
@@ -99,7 +102,7 @@ namespace MachineLearning.PGN
                     pgnMove.IsCapture = true;
                     moveText = moveText.Replace("x", string.Empty);
                 }
-                pgnMove.To = new(moveText[^2..]);
+                pgnMove.To = new SquareCoords(moveText[^2..]);
                 moveText = moveText[..^2];
                 if (moveText.Length == 2)
                 {
@@ -144,7 +147,7 @@ namespace MachineLearning.PGN
         }
 
         private static SimpleMove GetSimpleMoveFromPGNMove(PGNMove pgnMove) =>
-            new(pgnMove.From, pgnMove.To, pgnMove.PromotedTo);
+            new SimpleMove(pgnMove.From, pgnMove.To, pgnMove.PromotedTo);
 
         private static bool IsCaptureMove(string moveText) => moveText.Contains('x');
 
@@ -180,7 +183,7 @@ namespace MachineLearning.PGN
         private static PGNTag GetTagFromLine(string line)
         {
             string tagPattern = @"\[(?<key>.*) ""(?<value>.*)""\]";
-            Regex expression = new(tagPattern);
+            Regex expression = new Regex(tagPattern);
             Match m = expression.Match(line);
             if (!m.Success)
                 throw new ParserException("String is not in correct tag format");

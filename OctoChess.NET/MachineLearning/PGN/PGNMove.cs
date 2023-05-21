@@ -6,8 +6,8 @@ namespace MachineLearning.PGN
     public class PGNMove
     {
         public PieceType PieceType { get; set; }
-        public SquareCoords? From { get; set; }
-        public SquareCoords? To { get; set; }
+        public SquareCoords From { get; set; }
+        public SquareCoords To { get; set; }
         public bool IsCastle { get; set; }
         public bool IsCapture { get; set; }
         public bool IsPromotion { get; set; }
@@ -21,11 +21,11 @@ namespace MachineLearning.PGN
             IsCastle = false;
         }
 
-        public SimpleMove ToSimpleMove() => new(From, To, PromotedTo);
+        public SimpleMove ToSimpleMove() => new SimpleMove(From, To, PromotedTo);
 
         public override string ToString()
         {
-            return PieceType.GetLetterName() + From.ToString() + To.ToString();
+            return PieceType.GetLetterName() + From?.ToString() + To?.ToString();
         }
     }
 }

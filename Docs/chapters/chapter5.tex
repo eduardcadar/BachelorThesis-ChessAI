@@ -1,17 +1,24 @@
-\chapter{Technologies}
+\chapter{Technologies and implementation}
 \label{chap:ch5}
-
-\section{Technologies}
-\label{sec:ch5sec1}
-
 % Details of the programming languages, libraries, and tools used
 
-\subsection{Chess game}
+\section{Chess engine}
+\label{sec:ch5sec1}
+% Description of tools used in building the chess engine - C\#, keras
+
+\subsection{C\#}
 \label{subsec:ch5sec1subsec1}
 
+The chess engine implementation was written in C\#, as it offers a convenient way of modelling the chess entities through its object-oriented behaviour.
+
+The most preffered alternative for chess engines is C++, because of its execution speed. While C++ might be a better choice in terms of performance \cite{ogala2020comparative}, it is a programming language that is more difficult to develop and maintain due to its complex syntax and low-level memory manipulation. C\# also has robust access to helpful libraries, further simplifying the implementation process.
+
+Another option is Python, which offers greater ease of use, but is generally slower due to the fact that it uses dynamic typing and is an interpreted language, not a compiled one.
+
+\section{Chess game interface}
+\label{sec:ch5sec2}
 % Description of tools used in building the chess game - Unity, C\#
 
-\subsection{Chess engine}
-\label{subsec:ch5sec1subsec2}
+I created the chess interface in Unity, a game development engine that provides a visual editor and C\# scripting capabilities. I chose Unity because of its user-friendly and intuitive interface, as well as its ability to easily integrate external C\# libraries, such as the chess engine I built.
 
-% Description of tools used in building the chess engine - C\#, keras
+On the game interface I added inputs that allow the player to change the engine parameters: the minimax depth, the usage of iterative deepening and quiescence search, and also the time limit for the iterative deepening and the maximum depth for the quiescence search.

@@ -1,7 +1,7 @@
 {
   "version": 3,
   "targets": {
-    "net7.0": {
+    ".NETCoreApp,Version=v3.1": {
       "Keras.NET/3.8.5": {
         "type": "package",
         "dependencies": {
@@ -175,7 +175,7 @@
     }
   },
   "projectFileDependencyGroups": {
-    "net7.0": [
+    ".NETCoreApp,Version=v3.1": [
       "ChessGameLibrary >= 1.0.0",
       "Keras.NET >= 3.8.5"
     ]
@@ -197,15 +197,15 @@
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
-        "net7.0"
+        "netcoreapp3.1"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net7.0": {
-          "targetAlias": "net7.0",
+        "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
           "projectReferences": {
             "C:\\facultate\\BachelorThesis-ChessAI\\ChessGameLibrary\\ChessGameLibrary.csproj": {
               "projectPath": "C:\\facultate\\BachelorThesis-ChessAI\\ChessGameLibrary\\ChessGameLibrary.csproj"
@@ -220,8 +220,8 @@
       }
     },
     "frameworks": {
-      "net7.0": {
-        "targetAlias": "net7.0",
+      "netcoreapp3.1": {
+        "targetAlias": "netcoreapp3.1",
         "dependencies": {
           "Keras.NET": {
             "target": "Package",

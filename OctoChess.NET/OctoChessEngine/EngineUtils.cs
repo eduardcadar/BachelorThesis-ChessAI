@@ -1,6 +1,7 @@
 ﻿using ChessGameLibrary;
 using ChessGameLibrary.Enums;
 using OctoChessEngine.Enums;
+using System.Linq;
 
 namespace OctoChessEngine
 {
@@ -18,7 +19,7 @@ namespace OctoChessEngine
         {
             return pieceType switch
             {
-                PieceType.NONE => throw new NotImplementedException(),
+                PieceType.NONE => 0,
                 PieceType.PAWN => DEFAULT_PAWN_VALUE,
                 PieceType.KNIGHT => DEFAULT_KNIGHT_VALUE,
                 PieceType.BISHOP => DEFAULT_BISHOP_VALUE,
@@ -34,7 +35,7 @@ namespace OctoChessEngine
             if (piece.Color == PieceColor.WHITE)
                 return piece.Type switch
                 {
-                    PieceType.NONE => throw new NotImplementedException(),
+                    PieceType.NONE => 0,
                     PieceType.PAWN => DEFAULT_PAWN_VALUE + PieceSquareTable.PawnTable[rank][file],
                     PieceType.KNIGHT
                         => DEFAULT_KNIGHT_VALUE + PieceSquareTable.KnightTable[rank][file],
@@ -54,7 +55,7 @@ namespace OctoChessEngine
                 };
             return piece.Type switch
             {
-                PieceType.NONE => throw new NotImplementedException(),
+                PieceType.NONE => 0,
                 PieceType.PAWN => DEFAULT_PAWN_VALUE + PieceSquareTable.PawnTableBlack[rank][file],
                 PieceType.KNIGHT
                     => DEFAULT_KNIGHT_VALUE + PieceSquareTable.KnightTableBlack[rank][file],

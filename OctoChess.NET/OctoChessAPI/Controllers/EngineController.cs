@@ -18,6 +18,14 @@ namespace OctoChessAPI.Controllers
             _octoChess = octoChess;
         }
 
+        [Route("prepare")]
+        [HttpGet]
+        public async Task<ActionResult> InitializeEngine()
+        {
+            await Task.Run(() => Console.WriteLine("Prepared engine..."));
+            return Ok();
+        }
+
         [Route("bestMove")]
         [HttpGet]
         public async Task<ActionResult<MoveEvalDTO>> GetBestMove(
@@ -28,7 +36,7 @@ namespace OctoChessAPI.Controllers
             bool useIterativeDeepening = true,
             int timeLimit = 30,
             bool useQuiescenceSearch = true,
-            int maxQuiescenceDepth = 5,
+            int maxQuiescenceDepth = 4,
             CancellationToken cancellationToken = default
         )
         {
@@ -49,9 +57,7 @@ namespace OctoChessAPI.Controllers
             Console.WriteLine(
                 $"Best move: {bestMove.From}-{bestMove.To}{(bestMove.PromotedTo != ChessGameLibrary.Enums.PieceType.NONE ? bestMove.PromotedTo : "")}"
             );
-            //Console.Write(
-            //    $"{bestMove.From}{bestMove.To}{(bestMove.PromotedTo != ChessGameLibrary.Enums.PieceType.NONE ? bestMove.PromotedTo : "")} "
-            //);
+
             return Ok(jsonMove);
         }
     }

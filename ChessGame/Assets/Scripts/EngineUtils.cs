@@ -33,12 +33,22 @@ namespace Assets.Scripts
         public SquareCoords To { get; set; }
         public PieceType PromotedTo { get; set; }
         public double Evaluation { get; set; }
+
+        public override string ToString()
+        {
+            return From
+                + "-"
+                + To
+                + (PromotedTo != PieceType.NONE ? PromotedTo.ToString()[0] : "")
+                + " "
+                + Evaluation;
+        }
     }
 
     public static class EngineUtils
     {
-        private static HttpClient _httpClient =
-            new() { BaseAddress = new Uri("https://localhost:7091/api/engine/bestMove") };
+        private static readonly HttpClient _httpClient =
+            new() { BaseAddress = new Uri("https://localhost:7091/api/engine/") };
 
         public enum PlayerType
         {
@@ -52,30 +62,36 @@ namespace Assets.Scripts
             TRAINED_MODEL = 1
         }
 
-        public static async Task<SimpleMove> GetEngineBestMove(
-            string fen,
-            int depth,
-            bool useAlphaBetaPruning,
-            bool useIterativeDeepening,
-            int timeLimit,
-            bool useQuiescenceSearch,
-            int maxQuiescenceDepth,
-            EvaluationType evaluationType
-        )
+        public static int Depth { get; set; } = 3;
+        public static bool UseAlphaBetaPruning { get; set; } = true;
+        public static EvaluationType EvalType { get; set; } = EvaluationType.MATERIAL;
+        public static bool UseIterativeDeepening { get; set; } = false;
+        public static int TimeLimit { get; set; } = 50;
+        public static bool UseQuiescenceSearch { get; set; } = false;
+        public static int MaxQuiescenceDepth { get; set; } = 4;
+
+        public static async Task PrepareEngine()
+        {
+            await _httpClient.GetAsync("prepare");
+            UnityEngine.Debug.Log("Engine prepared...");
+        }
+
+        public static async Task<SimpleMove> GetEngineBestMove(string fen)
         {
             var query = System.Web.HttpUtility.ParseQueryString(string.Empty);
             query["fen"] = fen;
-            query["depth"] = depth.ToString();
-            query["useAlphaBetaPruning"] = useAlphaBetaPruning.ToString();
-            query["evaluationType"] = evaluationType.ToString();
-            query["useIterativeDeepening"] = useIterativeDeepening.ToString();
-            query["timeLimit"] = timeLimit.ToString();
-            query["useQuiescenceSearch"] = useQuiescenceSearch.ToString();
-            query["maxQuiescenceDepth"] = maxQuiescenceDepth.ToString();
+            query["depth"] = Depth.ToString();
+            query["useAlphaBetaPruning"] = UseAlphaBetaPruning.ToString();
+            query["evaluationType"] = ((int)EvalType).ToString();
+            query["useIterativeDeepening"] = UseIterativeDeepening.ToString();
+            query["timeLimit"] = TimeLimit.ToString();
+            query["useQuiescenceSearch"] = UseQuiescenceSearch.ToString();
+            query["maxQuiescenceDepth"] = MaxQuiescenceDepth.ToString();
             string queryString = "?" + query.ToString();
-            var response = await _httpClient.GetAsync(queryString);
+            var response = await _httpClient.GetAsync("bestMove" + queryString);
             var jsonResponse = await response.Content.ReadAsStringAsync();
             var root = JsonConvert.DeserializeObject<Root>(jsonResponse);
+
             var moveEvalDTO = new MoveEvalDTO()
             {
                 From = new SquareCoords(root.From.File, root.From.Rank),
@@ -83,6 +99,7 @@ namespace Assets.Scripts
                 PromotedTo = (PieceType)root.PromotedTo,
                 Evaluation = root.Evaluation,
             };
+
             return new SimpleMove(
                 moveEvalDTO.From,
                 moveEvalDTO.To,

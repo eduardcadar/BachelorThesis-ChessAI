@@ -1,5 +1,9 @@
 ﻿using ChessGameLibrary;
 using MachineLearning.PGN;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 using static MachineLearning.ManageData.DataUtils;
 
@@ -12,7 +16,8 @@ namespace MachineLearning.ManageData
         public static FilePositions GetMeanOfPositionResults(string folder)
         {
             int positionsCount = 0;
-            Dictionary<string, List<float>> positionsResults = new();
+            Dictionary<string, List<float>> positionsResults =
+                new Dictionary<string, List<float>>();
             foreach (string file in Directory.GetFiles(folder))
             {
                 Console.WriteLine(file);
@@ -23,13 +28,13 @@ namespace MachineLearning.ManageData
                     float result = float.Parse(split[^1]);
                     string position = line[..^(split[^1].Length + 1)];
                     if (!positionsResults.ContainsKey(position))
-                        positionsResults.Add(position, new());
+                        positionsResults.Add(position, new List<float>());
                     positionsResults[position].Add(result);
                     positionsCount++;
                 }
             }
-            List<float[]> positions = new();
-            List<float> values = new();
+            List<float[]> positions = new List<float[]>();
+            List<float> values = new List<float>();
             int i = 0;
             int a = positionsResults.Keys.Count / 10;
             foreach (string key in positionsResults.Keys)
@@ -43,7 +48,7 @@ namespace MachineLearning.ManageData
             Console.WriteLine();
             Console.WriteLine($"Number of positions: {positionsCount}");
             Console.WriteLine($"Number of distinct positions: {positionsResults.Keys.Count}");
-            return new(CreateRectangularArray(positions), values.ToArray());
+            return new FilePositions(CreateRectangularArray(positions), values.ToArray());
         }
 
         public static PositionsEvals GetPositionsEvalsFromFolder(
@@ -51,7 +56,7 @@ namespace MachineLearning.ManageData
             PositionsFileType type = PositionsFileType.CHESSDATA
         )
         {
-            PositionsEvals pe = new();
+            PositionsEvals pe = new PositionsEvals();
             string fileContains = "chessData";
             switch (type)
             {
@@ -81,9 +86,9 @@ namespace MachineLearning.ManageData
         )
         {
             Console.WriteLine("file: " + fileName);
-            Game game = new();
-            List<float[]> positions = new();
-            List<float> evals = new();
+            Game game = new Game();
+            List<float[]> positions = new List<float[]>();
+            List<float> evals = new List<float>();
             string[] lines = File.ReadAllLines(fileName)[1..];
             foreach (string line in lines)
             {
@@ -116,7 +121,7 @@ namespace MachineLearning.ManageData
 
         public static FilePositions GetTrainPositionsFromFolder(string folder)
         {
-            FilePositions fp = new();
+            FilePositions fp = new FilePositions();
             foreach (string file in Directory.GetFiles(folder))
                 fp.Add(GetPositionsFromFile(file));
             return fp;
@@ -125,8 +130,8 @@ namespace MachineLearning.ManageData
         public static FilePositions GetPositionsFromFile(string fileName)
         {
             Console.WriteLine("positions from: " + fileName);
-            List<float[]> positions = new();
-            List<float> results = new();
+            List<float[]> positions = new List<float[]>();
+            List<float> results = new List<float>();
             string[] lines = File.ReadAllLines(fileName)[1..];
             foreach (string line in lines)
             {
@@ -149,8 +154,8 @@ namespace MachineLearning.ManageData
         //
         public static string GetPositionsStringFromPGNGame(PGNGame pgnGame)
         {
-            StringBuilder sb = new();
-            Game game = new();
+            StringBuilder sb = new StringBuilder();
+            Game game = new Game();
             game.SetPositionFromFEN(Utils.STARTING_FEN);
 
             foreach (PGNMove move in pgnGame.Moves)
@@ -172,7 +177,7 @@ namespace MachineLearning.ManageData
         // Takes position from game and turns it into encoded string
         public static string GamePositionToDataString(Game game)
         {
-            StringBuilder sb = new();
+            StringBuilder sb = new StringBuilder();
 
             foreach (Square square in game.Board.Squares)
             {

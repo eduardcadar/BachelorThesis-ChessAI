@@ -1,5 +1,6 @@
 ﻿using ChessGameLibrary;
 using ChessGameLibrary.Enums;
+using System;
 using System.Text;
 
 namespace OctoChessEngine.Domain
@@ -27,14 +28,14 @@ namespace OctoChessEngine.Domain
             Evaluation = evaluation;
         }
 
-        public int CompareTo(MoveEval? other)
+        public int CompareTo(MoveEval other)
         {
-            return Evaluation.CompareTo(other.Evaluation);
+            return Evaluation.CompareTo(other?.Evaluation);
         }
 
         public override string ToString()
         {
-            StringBuilder sb = new();
+            StringBuilder sb = new StringBuilder();
             sb.Append("Move ").Append(MoveNumber).Append(' ').Append(From).Append('-').Append(To);
             if (PromotedTo != PieceType.NONE)
                 sb.Append(PromotedTo);
