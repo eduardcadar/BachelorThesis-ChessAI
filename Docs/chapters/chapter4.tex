@@ -15,20 +15,22 @@ To check the state of the board I used a threat map (fig. \ref{fig:threatMap}), 
 
 \begin{figure}
   \centering
-  \includegraphics[scale=0.5]{figures/white-threat-map.png}
+  \includegraphics[scale=0.55]{figures/white-threat-map.png}
   \captionof{figure}{White threat map}
   \label{fig:threatMap}
 \end{figure}
 
+To test the move generation, I implemented a Perft \cite{perft} (performance test) function. Perft is a tool to measure the efficiency and corectness of a chess engine's move generator. It involves counting the number of legal positions that can be reached from a given position within a specified depth. Perft results are used to check that the chess engine is correctly implemented, and Perft is also used as a benchmark to compare the speed of different chess engines or move generation algorithms.
+
 \section{Search}
 \label{sec:ch4sec2}
 
-The simplest way of searching in the game tree is through a fixed depth Minimax algorithm, which would be mathematically accurate, but would not yield good results and would be very slow. However, in combination with some optimizations and heuristics, it can compute faster and find better moves.
+The simplest way of searching in the game tree is through a fixed depth minimax algorithm, which would be mathematically accurate, but would not yield good results and would be very slow. However, in combination with some optimizations and heuristics, it can compute faster and find better moves.
 
 \subsection{Alpha-beta pruning}
 \label{subsec:ch4sec2subsec1}
 
-The Minimax algorithm was improved with Alpha-beta pruning, which preserves the accuracy of the algorithm and significantly reduces the number of nodes visited if combined with a good move ordering heuristic \cite{eric1992analysis}.
+The minimax algorithm was improved with Alpha-beta pruning, which preserves the accuracy of the algorithm and significantly reduces the number of nodes visited if combined with a good move ordering heuristic \cite{eric1992analysis}.
 
 A simple pseudocode for Alpha-beta pruning is shown in fig. \ref{fig:alphabetaPseudocode}:
 
@@ -44,7 +46,7 @@ The heuristic I used in combination with Alpha-beta pruning is MVV-LVA (Most Val
 \subsection{Quiescence search}
 \label{subsec:ch4sec2subsec2}
 
-When the Minimax search reaches the maximum depth in a branch, it evaluates the position and propagates it back. With the quiescence search optimization, the position is first checked for potential moves that could disrupt the evaluation in the following move.
+When the minimax search reaches the maximum depth in a branch, it evaluates the position and propagates it back. With the quiescence search optimization, the position is first checked for potential moves that could disrupt the evaluation in the following move.
 
 I considered captures and promotions to be disruptive moves, since they have a big impact on material. If there are no such moves available, the algorithm continues as normal. But if there are, the current static evaluation is kept as a "stand-pat" score (the term is used in poker, to describe a situation where a player chooses to keep their hand as it is without drawing any additional cards), to establish a lower bound on the evaluation.
 
@@ -53,10 +55,22 @@ The "disruptive" moves are played, and, from the positions reached, quiescence s
 The stand-pat score is used based on the Null Move Observation, which states
 that there is almost always a move that improves the current position - it assumes the player to move is not in Zugzwang (a position in which it is disadvantageous to move, as every move inevitably results in a worse position). The stand-pat assumes that even if all the disruptive moves are searched, and none of them increase alpha, one of the non-disruptive moves can most likely raise alpha. This is not valid if every move is searched.
 
+% example of position where quiescence search helps
+% 6k1/1q3ppp/8/3n4/8/3Q4/5PPP/5RK1 w - - 1 1
+
+In fig. \ref{fig:quiescencePosition} is shown an example of a simple position where quiescence search improves the engine's play. If it is white to move and the engine searches with a depth of 1 with no quiescence search, the best move found is queen takes knight, but that move gives up the queen, because black can recapture with his queen. If the engine searches with the quiescence search improvement, it will generate the queen recapture as a non-quiescent move and will assign a low score to the queen takes knight move.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/quiescence-position.png}
+    \caption{Quiescence search example}
+    \label{fig:quiescencePosition}
+\end{figure}
+
 \subsection{Iterative deepening}
 \label{subsec:ch4sec2subsec3}
 
-The iterative deepening starts computing the evaluations for the Minimax with depth 1, and then increments the depth up to the given maximum depth. After the time given as an input elapses, the search is stopped and the move with the best evaluation found on the previous depth search is returned. I set the maximum time to 50 seconds, but this can be easily changed from a parameter, depending on the length of the match and accuracy of moves the user of the engine desires.
+The iterative deepening starts computing the evaluations for the minimax at depth 1, and then increments the depth up to the given maximum depth. After the time given as an input elapses, the search is stopped and the move with the best evaluation found on the previous depth search is returned. I set the maximum time to 50 seconds, but this can be easily changed from a parameter, depending on the length of the match and accuracy of moves the user of the engine desires.
 
 \section{Evaluation}
 \label{sec:ch4sec3}
@@ -106,7 +120,7 @@ Each piece has a base value (fig. \ref{fig:piecesValues}), to which another valu
 \subsection{Neural network}
 \label{subsec:ch4sec3subsec2}
 
-For the second evaluation function, I trained a neural network on grandmaster chess matches.
+For the second evaluation function, I trained a neural network on grandmaster chess matches. The neural network evaluation alone would be even weaker than the previous one, since it would not consider material imbalance. The material evaluation is still computed, and the neural network evaluation is added to the material value. The material evaluation outputs values usually between -10 and 10, and the neural network outputs values between -1 and 1, so it is only relevant when deciding between moves of close material evaluations.
 
 \subsubsection{Dataset}
 \label{subsec:ch4sec3subsec2subsubsec1}

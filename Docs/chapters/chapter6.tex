@@ -5,3 +5,42 @@
 % Analysis of the results obtained
 % Comparison with existing chess engines
 % Evaluation of the strengths and weaknesses of the chess engine
+
+To test the engine's performance, I used the precision at k (P@K) metric. Precision at k is an evaluation metric commonly used in recommendation systems to measure the accuracy of the top-k ranked items. It assesses the proportion of relevant items within the top-k items recommended.
+
+As "relevant items" I chose the top 5 moves given by Stockfish, and I compared them to the top 5 moves found by my engine in several positions. For each position, I calculated the number of moves found by the engine that are also in the top 5 moves found by Stockfish and I divided it by 5. At the end, I averaged all of the results.
+
+Although this way of testing doesn't provide a comprehensive assessment of the overall strength or playing performance of the chess engine, it is useful in comparing between the two approaches available in the engine I built: the static material evaluation, and the evaluation that also uses the neural network.
+
+The evaluations were computed for 45 tactical positions, with the same algorithm parameters for both approaches - depth of 3, alpha beta pruning, no iterative deepening (meaning no time limit), and quiescence search with a maximum quiescence depth of 3. The averages of the results are shown in the following table:
+
+% material evaluation precision at k: 0.322727
+% neural network evaluation precision at k: 0.336364
+
+\begin{center}
+    \begin{tabular}{ |c|c| }
+        \hline
+        \textbf{Evaluation method} & \textbf{Precision at 5} \\
+        \hline
+        Material & 0.322727 \\
+        \hline
+        Neural network & 0.336364 \\
+        \hline
+    \end{tabular}
+\end{center}
+
+From the results, the neural network approach seems to slightly improve the evaluation.
+
+The engine is able to win against the first two levels of Stockfish, but fails against level 3, when Stockfish starts to make more sensible moves. Following are the matches against level 2 and level 3 of Stockfish, in PGN format.
+
+Against level 2, Stockfish playing with white:
+
+1. e4 Nc6 2. d4 Nf6 3. Bd3 Nxd4 4. c3 Ne6 5. Nd2 Nf4 6. Nb3 Nxg2+ 7. Kd2 Nf4 8. Bc2 d5 9. e5 Nd7 10. Ke1 Ng6 11. f4 Ndxe5 12. Qd4 Nxf4 13. Nc5 Ng2+ 14. Kf2 Nc6 15. Qa4 Bd7 16. Ne2 Ne5 17. Qb3 Bh3 18. Rd1 Ng4+ 19. Kg3 Nxh2 20. Nxb7 Qd7 21. Qxd5 Qxd5 22. Kxh2 Qxb7 23. Nd4 Bg4 24. Rd2 Nf4 25. Ba4+ Bd7 26. Bb3 f6 27. Rb1 Qe4 28. Nc2 Bf5 29. Kg1 Rb8 30. Kf2 Rb7 31. Kg3 Qe5 32. Bc4 Qe4 33. Ba6 Rb6 34. Rh2 Rxa6 35. Bxf4 Rxa2 36. Rf1 Rxb2 37. Nb4 Rxh2 38. c4 Qg2\# 0-1
+
+Stockfish makes many mistakes, which lead to my engine gaining a big material advantage and eventually delivering a checkmate.
+
+Against level 3, Stockfish playing with white:
+
+1. e4 Nc6 2. Nf3 Nf6 3. Nc3 Ng4 4. h3 Nge5 5. d3 Nxf3+ 6. gxf3 Rb8 7. d4 e5 8. dxe5 Nxe5 9. f4 Nc6 10. Bc4 f5 11. Qd5 Qf6 12. exf5 Qe7+ 13. Kd2 Nb4 14. f6 Nxd5 15. fxe7 Nxe7 16. Nd5 Nxd5 17. Ke2 Nb4 18. Bb3 Ke7 19. Be3 Nc6 20. Rhg1 Kd6 21. f5 Ke5 22. Rgd1 Kxf5 23. f3 Ne5 24. Rg1 Bd6 25. Rxg7 Ra8 26. Bd5 Rb8 27. a3 Ra8 28. Rf1 Rb8 29. f4 Bxa3 30. Bd4 Nf3 31. Rxf3 Re8+ 32. Kd3 Be7 33. Rxh7 Ra8 34. c3 Bd6 35. Rh6 Re6 36. Rh5+ Kg6 37. Rg5+ Kh7 38. Rfg3 Bxf4 39. Rh5+ Bh6 40. Rg7+ Kh8 41. Rg6+ Rf6 42. Rhxh6\# 1-0
+
+Although Stockfish still gives up a piece at one point, my engine makes bad positional moves and Stockfish manages to find a checkmate.

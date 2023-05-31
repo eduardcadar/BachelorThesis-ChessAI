@@ -1,7 +1,6 @@
 using ChessGameLibrary;
 using ChessGameLibrary.Enums;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using static Assets.Scripts.EngineUtils;
@@ -16,6 +15,7 @@ public class Chessboard : MonoBehaviour
     private Material selectedMaterial;
     public GameObject SelectedSquarePrefab;
     public GameObject ValidMoveSquarePrefab;
+    public GameObject LastMoveSquarePrefab;
     public GameObject ThreatMapSquarePrefab;
     public WhitePromotionPieceScript SelectPromotionPieceW;
 
@@ -60,11 +60,15 @@ public class Chessboard : MonoBehaviour
     public GameObject DepthInput;
     public GameObject TimeLimitInput;
     public GameObject QuiescenceDepthInput;
+    public GameObject ButtonRestartGame;
+    public GameObject EngineIsSearchingText;
 
     public Game Game;
     public bool IsPlayerWhiteHuman { get; set; } = true;
     public bool IsPlayerBlackHuman { get; set; } = true;
     public GameObject SelectedSquare { get; set; } = null;
+    public GameObject LastMoveFromSquare { get; set; } = null;
+    public GameObject LastMoveToSquare { get; set; } = null;
     public List<GameObject> ValidMoves = new();
     public List<GameObject> ThreatMap = new();
     public bool ShowWhiteThreatMap = false;
@@ -77,21 +81,18 @@ public class Chessboard : MonoBehaviour
     }
 
     // LOGIC
-    private static readonly string startingFEN =
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
     private float TILE_SIZE;
-    public const float TIME_BEFORE_ENGINE_MOVES = 0.5f; // in seconds
+
+    //public const float TIME_BEFORE_ENGINE_MOVES = 0.5f; // in seconds
     private GameObject[,] tiles;
 
     private void Awake()
     {
+        EngineIsSearchingText.SetActive(false);
         selectedMaterial.color = Color.red;
         GenerateAllTiles(TILE_COUNT_X, TILE_COUNT_Y);
-        //int ok = GenerateClassicPieces();
-        //string FEN = "rnbqkbnr/P3pppp/2pp4/8/8/8/PP1PPPPP/RNBQKBNR w KQkq - 0 5";
-        Task.Run(async () => await PrepareEngine());
         InitializeBoard();
     }
 
@@ -102,9 +103,18 @@ public class Chessboard : MonoBehaviour
     public void UpdateGameStateText() =>
         GameStateText.GetComponent<TextMeshProUGUI>().text = "Game state: " + Game.State.ToString();
 
+    private void ClearLastMoveSquares()
+    {
+        if (LastMoveFromSquare != null)
+            Destroy(LastMoveFromSquare);
+        if (LastMoveToSquare != null)
+            Destroy(LastMoveToSquare);
+    }
+
     public void InitializeBoard()
     {
         ClearBoardOfPieces();
+        ClearLastMoveSquares();
         string FEN = Utils.STARTING_FEN;
         Game = new();
         //Game.SetPlayerTypes(PlayerType.HUMAN, PlayerType.STOCKFISH);
@@ -249,11 +259,6 @@ public class Chessboard : MonoBehaviour
         return 0;
     }
 
-    private int GenerateClassicPieces()
-    {
-        return GeneratePiecesFromFEN(startingFEN);
-    }
-
     public void InstantiatePiece(PieceType pieceType, PieceColor color, int x, int y)
     {
         if (x < 0 || x >= TILE_COUNT_X || y < 0 || y >= TILE_COUNT_Y)
@@ -289,16 +294,11 @@ public class Chessboard : MonoBehaviour
         if (pieceGameObject)
         {
             Piece piece = pieceGameObject.AddComponent<Piece>();
-            pieceGameObject.AddComponent<SpriteRenderer>().sortingLayerName = "Pieces";
+            //pieceGameObject.AddComponent<SpriteRenderer>().sortingLayerName = "Pieces";
             piece.Initialize(pieceGameObject, pieceType, color);
             pieceGameObject.transform.parent = tileObject.transform;
-            //pieceGameObject.transform.localScale = new Vector3(TILE_SIZE, TILE_SIZE);
         }
     }
-
-    private void OnMouseDown() { }
-
-    private void Update() { }
 
     // Generate the board
     private void GenerateAllTiles(int tileCountX, int tileCountY)
@@ -326,8 +326,6 @@ public class Chessboard : MonoBehaviour
 
         Mesh mesh = new();
 
-        //tileGameObject.AddComponent<MeshFilter>().mesh = mesh;
-        //tileGameObject.AddComponent<MeshRenderer>().material = tileMaterial;
         tileGameObject.AddComponent<SpriteRenderer>();
         SpriteRenderer spR = tileGameObject.GetComponent<SpriteRenderer>();
         if (spR)

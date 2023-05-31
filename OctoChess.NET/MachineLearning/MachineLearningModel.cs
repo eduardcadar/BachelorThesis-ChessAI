@@ -12,7 +12,6 @@ namespace MachineLearning
     {
         public string Optimizer { get; } = "sgd";
         public string Loss { get; } = "mean_squared_error";
-        public string[] Metrics { get; } = { };
         private BaseModel _model;
 
         public MachineLearningModel()
@@ -25,7 +24,7 @@ namespace MachineLearning
             Sequential model = new Sequential();
             model.Add(new Dense(32, activation: "relu", input_shape: new Shape(70)));
             model.Add(new Dense(1, activation: "tanh"));
-            model.Compile(optimizer: Optimizer, loss: Loss, metrics: Metrics);
+            model.Compile(optimizer: Optimizer, loss: Loss);
             _model = model;
         }
 
@@ -63,7 +62,7 @@ namespace MachineLearning
                 File.ReadAllText(DataUtils.ModelsDirectory + "model.json")
             );
             _model.LoadWeight(DataUtils.ModelsDirectory + "model.h5");
-            _model.Compile(optimizer: Optimizer, loss: Loss, metrics: Metrics);
+            _model.Compile(optimizer: Optimizer, loss: Loss);
         }
 
         public float[] Predict(float[,] positions)

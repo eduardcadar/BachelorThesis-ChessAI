@@ -19,13 +19,17 @@ Regarding legality of the moves, move generation can be pseudo-legal or legal. I
 \subsection{Bitboards}
 \label{subsec:ch2sec1subsec2}
 
-\subsection{Threat maps}
-\label{subsec:ch2sec1subsec3}
+Chess engines often use bitboards to represent the board in a piece centric manner. They are essentially 64-bit integers, where each bit corresponds to a square on the chessboard. This approach reduces used space and makes move generation and position evaluation more efficient. There are multiple types of bitboards, some of the most common ones being:
+\begin{itemize}
+    \item Occupancy bitboards: they represent the positions of the pieces, a bit representing if the square is occupied by a piece of a certain type or not. There are separate bitboards for each piece type and for each player
+    \item Attack bitboards: these bitboards indicate the attacking squares for each type. For example, the attack bitboard for a knight shows all the squares a knight on a specific square can move to
+    \item Check bitboards: these bitboards represent squares under attack by the opponent's pieces. They help determine if a move puts the king in check
+\end{itemize}
 
 \section{Search}
 \label{sec:ch2sec2}
 
-\subsection{Minimax algorithm}
+\subsection{Minimax}
 \label{subsec:ch2sec2subsec1}
 
 The minimax algorithm represents the search as a tree, where the root node is the current position, edges to its children are the possible moves and the children are the positions reached by making each respective move. Then, for each child node (position) the process continues: edges for the legal moves, child nodes for reached positions. If enough computing power was available, generating the nodes would stop when a position which can be given a perfect evaluation would be reached - that is, an end position, which would be evaluated with win for white, draw, or win for black. Since from most positions the tree would be far too big to generate, the tree is usually generated to some depth (the evaluations would become more accurate the deeper the tree is generated), and the positions reached are then evaluated using a numerical heuristic function. The evaluations are then propagated back to the root node in the following way: for each node that has all of its children evaluated, if it is white's turn, the node is given the maximum value of its child nodes, and if it is black's turn, the node is given the minimum value of its child nodes instead.\cite{klein2022neural}
@@ -68,7 +72,7 @@ To deal with these situations, quiescence search is an improvement that continue
 % HORIZON EFFECT
 
 \subsection{Iterative deepening}
-\label{subsec:ch2sec1subsec4}
+\label{subsec:ch2sec2subsec4}
 
 When limiting the search by time, performing the minimax to a fixed depth has some disadvantages: if the time has elapsed and the algorithm didn't finish, the results are probably bad, but, on the other hand, if the algorithm finished there might still be some time left, which could be used to improve the result \cite{carolus2006alpha}.
 
@@ -76,8 +80,18 @@ Adrian De Groot, dutch psychologist and chess master, first mentioned the idea o
 
 Along with the ability of the algorithm to work well with time limits, iterative deepening introduces an additional advantage: the moves can be ordered at each level using the results given by the previous search, and this has shown to bring improvements to the number of branches cut by alpha-beta pruning.
 
-% \subsubsection{Monte Carlo Tree Search}
-% \label{subsubsec:ch2sec1subsec2subsubsec5}
+\subsection{Monte Carlo Tree Search}
+\label{subsec:ch2sec2subsec5}
+
+Monte Carlo Tree Search (MCTS) is a search algorithm particularly effective in situations where the state space is large and difficult to exhaustively explore, such as in chess. It is based on the concept of random sampling or simulation. It builds and explores a search tree by repeatedly performing a four-step process:
+\begin{itemize}
+    \item Selection: starting from the root node of the search tree (the current position), MCTS navigates down the tree by selecting child nodes according to a selection policy, which tipically balances exploration (visiting unexplored moves) and exploitation (favoring moves already visited that have a high win rate)
+    \item Expansion: once a leaf node is reached, the algorithm expands the tree by generating other child nodes representing possible moves from that position
+    \item Simulation: after expanding the tree, MCTS performs simulations from the newly added child nodes, which involves playing a game from the current state to the end using a simple policy (even random moves) until a terminal state is reached
+    \item Backpropagation: the result of the simulation is propagated up the tree, updating the statistics of nodes (for example visit count, win count); this information is used to estimate the evaluation of each node and guide future selection
+\end{itemize}
+
+By repeating these steps for a certain number of iterations or until a time limit is reached, MCTS gradually builds up knowledge about the current position.
 
 \section{Evaluation}
 \label{sec:ch2sec3}
@@ -118,8 +132,10 @@ Most of the times, handcrafted evaluation functions also take into consideration
 \subsection{Neural network}
 \label{subsec:ch2sec3subsec3}
 
-Another way of building an evaluation function is through training a neural network.
+Another way of building an evaluation function is through training a neural network. Neural networks are a class of machine learning models inspired by the structure and functioning of the human brain. They are designed to learn and make predictions or decisions based on input data. Neural networks excel at tasks involving pattern recognition, classification, regression, and other complex data analysis tasks.
 
-One approach to training the neural network is to use supervised learning, by giving it the position, sometimes along hand-crafted features as input (the ones previously mentioned: material, mobility etc.), and the corresponding evaluations, such as the scores given by human experts or strong chess engines.
+Neural networks are composed of interconnected nodes called neurons. They are organized into layers: an input layer, one or more hidden layers, and an output layer. Each neuron receives some values as input, applies a mathematical operation, and produces an output that is passed on to the next layer.
 
-Another approach is to use reinforcement learning, where the network is trained by playing against itself and learning from the outcomes of the games.
+One approach to training the neural network for evaluating chess positions is to use supervised learning, by giving it the position, sometimes along hand-crafted features as input (the ones previously mentioned: material, mobility etc.), and the corresponding evaluations, such as the scores given by human experts or strong chess engines.
+
+Another approach is to use reinforcement learning, where the network is trained by playing against itself and learning from the outcomes of the games. This technique has the advantage of generating its own training data, as well as the ability to find patterns that are stronger and more complex than those that people can think of, if sufficiently trained.

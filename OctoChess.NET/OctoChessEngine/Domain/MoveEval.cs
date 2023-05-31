@@ -33,6 +33,11 @@ namespace OctoChessEngine.Domain
             return Evaluation.CompareTo(other?.Evaluation);
         }
 
+        public string ToStringMoveOnly()
+        {
+            return From.ToString() + To.ToString();
+        }
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

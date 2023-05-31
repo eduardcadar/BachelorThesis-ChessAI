@@ -8,8 +8,9 @@
 	<Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
 
+
   <ItemGroup>
-    <ProjectReference Include="..\..\ChessGameLibrary\ChessGameLibrary.csproj" />
+	<ProjectReference Include="..\..\ChessGameLibrary\ChessGameLibrary.csproj" />
   </ItemGroup>
 
 </Project>

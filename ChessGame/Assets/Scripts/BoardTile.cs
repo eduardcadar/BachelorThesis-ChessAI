@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BoardTile : MonoBehaviour
 {
@@ -35,6 +36,18 @@ public class BoardTile : MonoBehaviour
         }
     }
 
+    private void StartedSearching()
+    {
+        Chessboard.EngineIsSearchingText.SetActive(true);
+        Chessboard.ButtonRestartGame.GetComponent<Button>().interactable = false;
+    }
+
+    private void FinishedSearching()
+    {
+        Chessboard.EngineIsSearchingText.SetActive(false);
+        Chessboard.ButtonRestartGame.GetComponent<Button>().interactable = true;
+    }
+
     private void HumanMove()
     {
         if (Chessboard.SelectedSquare == null)
@@ -60,12 +73,31 @@ public class BoardTile : MonoBehaviour
             {
                 DestroySelectedAndValidSquares();
             }
-            return;
         }
+    }
+
+    private void UpdateLastMoveSquares(SquareCoords from, SquareCoords to)
+    {
+        if (Chessboard.LastMoveFromSquare != null)
+            Destroy(Chessboard.LastMoveFromSquare);
+        Chessboard.LastMoveFromSquare = Instantiate(
+            Chessboard.LastMoveSquarePrefab,
+            Chessboard.GetTile(from).transform
+        );
+        Chessboard.LastMoveFromSquare.AddComponent<SpriteRenderer>().sortingLayerName = "Tiles";
+
+        if (Chessboard.LastMoveToSquare != null)
+            Destroy(Chessboard.LastMoveToSquare);
+        Chessboard.LastMoveToSquare = Instantiate(
+            Chessboard.LastMoveSquarePrefab,
+            Chessboard.GetTile(to).transform
+        );
+        Chessboard.LastMoveToSquare.AddComponent<SpriteRenderer>().sortingLayerName = "Tiles";
     }
 
     async void EngineMove()
     {
+        StartedSearching();
         _finishedMove = false;
         await Task.Yield();
         //return new WaitForSecondsRealtime(Chessboard.TIME_BEFORE_ENGINE_MOVES);
@@ -82,6 +114,8 @@ public class BoardTile : MonoBehaviour
         if (Chessboard.Game.State != GameState.INPROGRESS)
             Debug.Log(Chessboard.Game.State);
         _finishedMove = true;
+        FinishedSearching();
+        UpdateLastMoveSquares(move.From, move.To);
     }
 
     private void MoveOnBoard(MoveInfo move)
@@ -190,8 +224,6 @@ public class BoardTile : MonoBehaviour
     private IEnumerator PromotionMove(BoardTile clickedSquare, Piece pieceToMove)
     {
         // pop-up to select promotion piece
-        //var prefab = switch color
-        //var selectPiecePopup = Instantiate(chessboard.SelectPromotionPieceWPrefab, chessboard.transform);
         Chessboard.SelectPromotionPieceW.PieceType = PieceType.NONE;
         Chessboard.SelectPromotionPieceW.gameObject.SetActive(true);
         yield return StartCoroutine(SelectPromotionPiece(clickedSquare, pieceToMove));
@@ -237,6 +269,8 @@ public class BoardTile : MonoBehaviour
             pieceToMove.transform.position = clickedSquare.transform.position;
         }
         _finishedMove = true;
+
+        UpdateLastMoveSquares(moveInfo.From, moveInfo.To);
 
         if (Chessboard.Game.State != GameState.INPROGRESS)
             Debug.Log(Chessboard.Game.State);

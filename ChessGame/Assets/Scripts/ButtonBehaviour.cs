@@ -1,3 +1,4 @@
+using OctoChessEngine.Enums;
 using TMPro;
 using UnityEngine;
 using static Assets.Scripts.EngineUtils;

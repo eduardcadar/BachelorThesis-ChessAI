@@ -17,8 +17,16 @@ namespace ChessGameLibrary
         public bool PrevBlackCanCastleKing { get; set; }
         public bool PrevBlackCanCastleQueen { get; set; }
 
-        public MoveInfo(MoveType moveType, Piece piece, SquareCoords from, SquareCoords to,
-            bool prevWhiteCanCastleKing, bool prevWhiteCanCastleQueen, bool prevBlackCanCastleKing, bool prevBlackCanCastleQueen)
+        public MoveInfo(
+            MoveType moveType,
+            Piece piece,
+            SquareCoords from,
+            SquareCoords to,
+            bool prevWhiteCanCastleKing,
+            bool prevWhiteCanCastleQueen,
+            bool prevBlackCanCastleKing,
+            bool prevBlackCanCastleQueen
+        )
         {
             MoveType = moveType;
             Piece = piece;

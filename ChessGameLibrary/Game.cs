@@ -508,9 +508,9 @@ namespace ChessGameLibrary
                 s2;
             s1 = new SquareCoords(from.File + 1, from.Rank + direction);
             s2 = new SquareCoords(from.File - 1, from.Rank + direction);
-            if (IsInsideBoard(s1.File, s1.Rank))
+            if (Utils.IsInsideBoard(s1.File, s1.Rank))
                 squares.Add(new SquareCoords(from.File + 1, from.Rank + direction));
-            if (IsInsideBoard(s2.File, s2.Rank))
+            if (Utils.IsInsideBoard(s2.File, s2.Rank))
                 squares.Add(new SquareCoords(from.File - 1, from.Rank + direction));
             return squares;
         }
@@ -520,11 +520,11 @@ namespace ChessGameLibrary
             List<SquareCoords> squares = new List<SquareCoords>();
             for (int i = 0; i < Utils.KnightMoveCoordsX.Length; i++)
             {
-                int X = Utils.KnightMoveCoordsX[i],
-                    Y = Utils.KnightMoveCoordsY[i];
-                int newFile = from.File + X,
-                    newRank = from.Rank + Y;
-                if (IsInsideBoard(newFile, newRank))
+                int x = Utils.KnightMoveCoordsX[i],
+                    y = Utils.KnightMoveCoordsY[i];
+                int newFile = from.File + x,
+                    newRank = from.Rank + y;
+                if (Utils.IsInsideBoard(newFile, newRank))
                 {
                     squares.Add(new SquareCoords(newFile, newRank));
                 }
@@ -554,7 +554,7 @@ namespace ChessGameLibrary
 
         private void AddPieceToBoard(PieceType pieceType, PieceColor pieceColor, int file, int rank)
         {
-            if (file < 0 || file >= Utils.NO_FILES || rank < 0 || rank >= Utils.NO_RANKS)
+            if (file < 0 || file >= Utils.FILES_COUNT || rank < 0 || rank >= Utils.RANKS_COUNT)
             {
                 // error
             }
@@ -680,7 +680,7 @@ namespace ChessGameLibrary
             int direction = pieceColor == PieceColor.WHITE ? 1 : -1;
             int firstPawnRank = pieceColor == PieceColor.WHITE ? 1 : 6;
             int nextRank = from.Rank + direction;
-            if (IsInsideBoard(nextRank))
+            if (Utils.IsInsideBoard(nextRank))
             {
                 if (Board.Squares[from.File, nextRank].Piece == null)
                 {
@@ -691,7 +691,7 @@ namespace ChessGameLibrary
                     )
                         squares.Add(new SquareCoords(from.File, nextRank + direction));
                 }
-                if (IsInsideBoard(from.File + 1))
+                if (Utils.IsInsideBoard(from.File + 1))
                 {
                     if (
                         IsEnemyPieceOnSquare(pieceColor, from.File + 1, nextRank)
@@ -699,7 +699,7 @@ namespace ChessGameLibrary
                     )
                         squares.Add(new SquareCoords(from.File + 1, nextRank));
                 }
-                if (IsInsideBoard(from.File - 1))
+                if (Utils.IsInsideBoard(from.File - 1))
                 {
                     if (
                         IsEnemyPieceOnSquare(pieceColor, from.File - 1, nextRank)
@@ -716,11 +716,11 @@ namespace ChessGameLibrary
             List<SquareCoords> squares = new List<SquareCoords>();
             for (int i = 0; i < Utils.KnightMoveCoordsX.Length; i++)
             {
-                int X = Utils.KnightMoveCoordsX[i],
-                    Y = Utils.KnightMoveCoordsY[i];
-                int newFile = from.File + X,
-                    newRank = from.Rank + Y;
-                if (IsInsideBoard(newFile, newRank))
+                int x = Utils.KnightMoveCoordsX[i],
+                    y = Utils.KnightMoveCoordsY[i];
+                int newFile = from.File + x,
+                    newRank = from.Rank + y;
+                if (Utils.IsInsideBoard(newFile, newRank))
                 {
                     Piece p = Board.Squares[newFile, newRank].Piece;
                     if (p == null || p.Color != pieceColor)
@@ -871,23 +871,13 @@ namespace ChessGameLibrary
 
         private bool IsSquareEmptyOrEnemyPiece(PieceColor pieceColor, int file, int rank)
         {
-            if (IsInsideBoard(file, rank))
+            if (Utils.IsInsideBoard(file, rank))
             {
                 Piece p = Board.Squares[file, rank].Piece;
                 if (p == null || p.Color != pieceColor)
                     return true;
             }
             return false;
-        }
-
-        private bool IsInsideBoard(int x)
-        {
-            return x >= 0 && x < 8;
-        }
-
-        private bool IsInsideBoard(int x, int y)
-        {
-            return IsInsideBoard(x) && IsInsideBoard(y);
         }
     }
 }

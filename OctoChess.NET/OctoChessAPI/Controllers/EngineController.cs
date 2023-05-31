@@ -26,6 +26,15 @@ namespace OctoChessAPI.Controllers
             return Ok();
         }
 
+        [Route("clearPreviousEvals")]
+        [HttpGet]
+        public async Task<ActionResult> ClearPreviousEvals()
+        {
+            await Task.Run(() => _octoChess.ClearPreviousEvals());
+            Console.WriteLine("Cleared previous evaluations!");
+            return Ok();
+        }
+
         [Route("bestMove")]
         [HttpGet]
         public async Task<ActionResult<MoveEvalDTO>> GetBestMove(
@@ -42,15 +51,18 @@ namespace OctoChessAPI.Controllers
         {
             string decodedFen = System.Web.HttpUtility.UrlDecode(fen);
             _octoChess.SetFenPosition(decodedFen);
-            MoveEval bestMove = await _octoChess.BestMove(
-                maxDepth: depth,
-                useAlphaBetaPruning: useAlphaBetaPruning,
-                evaluationType: evaluationType,
-                useIterativeDeepening: useIterativeDeepening,
-                timeLimit: timeLimit,
-                useQuiescenceSearch: useQuiescenceSearch,
-                maxQuiescenceDepth: maxQuiescenceDepth,
-                cancellationToken: cancellationToken
+            MoveEval bestMove = await Task.Run(
+                () =>
+                    _octoChess.BestMove(
+                        maxDepth: depth,
+                        useAlphaBetaPruning: useAlphaBetaPruning,
+                        evaluationType: evaluationType,
+                        useIterativeDeepening: useIterativeDeepening,
+                        timeLimit: timeLimit,
+                        useQuiescenceSearch: useQuiescenceSearch,
+                        maxQuiescenceDepth: maxQuiescenceDepth
+                    ),
+                cancellationToken
             );
             MoveEvalDTO moveEvalDTO = new(bestMove);
             string jsonMove = JsonSerializer.Serialize(moveEvalDTO);
