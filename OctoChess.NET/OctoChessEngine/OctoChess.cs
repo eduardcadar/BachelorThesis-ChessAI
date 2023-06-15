@@ -109,6 +109,7 @@ namespace OctoChessEngine
             if (maxDepth <= 0)
                 throw new NotImplementedException("Depth should be >0");
 
+            _stopwatch.Reset();
             if (useIterativeDeepening)
                 return IterativeDeepening(
                     maxDepth: maxDepth,
@@ -163,7 +164,6 @@ namespace OctoChessEngine
                 firstMove.PromotedTo
             );
             _maxTime = TimeSpan.FromSeconds(timeLimit);
-            _stopwatch.Reset();
             for (int currentDepth = 1; currentDepth <= maxDepth; currentDepth++)
             {
                 _stopwatch.Start();

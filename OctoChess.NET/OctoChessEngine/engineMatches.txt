@@ -1,0 +1,7 @@
+White: OctoChess Neural Network evaluation
+Black: OctoChess Material evaluation
+1. b1c3 b8c6 2. g1h3 e7e5 3. f2f4 d8h4 4. g2g3 h4f6 5. f1g2 g8e7 6. c3e4 f6f5 7. e1g1 e7d5 8. c2c4 d5e7 9. f1f2 c6d4 10. e2e3 d4e6 11. g3g4 f5g6 12. f4f5 g6h6 13. g4g5 e6g5 14. h3g5 f7f6 15. g5f3 e8f7 16. d1a4 d7d6 17. c4c5 e7f5 18. a4b3 f7g6 19. b3a4 c8e6 20. c5c6 b7b6 21. a4b5 d6d5 22. e4g3 f5g3 23. h2g3 f8d6 24. f3h4 g6h5 25. g2d5 e6d5 26. b5e2 d5f3 27. e2f3 h5g5 28. f3f5 1-0
+
+White: OctoChess Material evaluation
+Black: OctoChess Neural Network evaluation
+1. b1c3 b8c6 2. g1h3 c6d4 3. e2e3 d4c6 4. h3f4 g8f6 5. f1d3 c6e5 6. d3f5 e7e6 7. f4d3 e5d3 8. f5d3 f8d6 9. d1f3 e8g8 10. e1g1 d8e7 11. c3e4 f6e4 12. f3e4 f7f5 13. e4f3 e7h4 14. g2g3 h4a4 15. f1e1 d6e5 16. e1e2 a4b4 17. a1b1 f8f7 18. g1g2 b4a5 19. b1a1 a5b6 20. a1b1 b6a5 21. b1a1 a5b6 22. a1b1 b6a5 23. b1a1 1/2-1/2

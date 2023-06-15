@@ -35,7 +35,11 @@ namespace OctoChessEngine.Domain
 
         public string ToStringMoveOnly()
         {
-            return From.ToString() + To.ToString();
+            StringBuilder sb = new StringBuilder();
+            sb.Append(From).Append(To);
+            if (PromotedTo != PieceType.NONE)
+                sb.Append(PromotedTo.GetLetterName());
+            return sb.ToString();
         }
 
         public override string ToString()

@@ -1,7 +1,6 @@
 ﻿using ChessGameLibrary;
 using OctoChessEngine;
 using System;
-using System.Diagnostics;
 
 //string fen = "rnbqkbnr/P3pppp/2pp4/8/8/8/PP1PPPPP/RNBQKBNR w KQkq - 0 5";
 //string fen = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
@@ -12,45 +11,63 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        Evaluation evaluation = new Evaluation();
+        //Evaluation evaluation = new Evaluation();
         //evaluation.Evaluate();
-        evaluation.ShowEvaluationResultsFromFiles();
+        //evaluation.ShowEvaluationResultsFromFiles();
+        //return;
 
-        return;
         Console.WriteLine("OctoChess");
         OctoChess engine = new OctoChess();
-        Stopwatch sw = new Stopwatch();
         Game game = new Game();
 
-        //string fen = Utils.STARTING_FEN;
+        string fen = Utils.STARTING_FEN;
 
-        string fen = "5B2/6P1/1p6/8/1N6/kP6/2K5/8 w - - 0 1";
+        //string fen = "r1b3k1/pppp1rpp/1q2p3/4bp2/8/3BPQP1/PPPPRPKP/R1B5 w - - 11 20";
         game.SetPositionFromFEN(fen);
 
-        while (!game.IsOver)
-        {
-            sw.Start();
+        //Stopwatch sw = new Stopwatch();
+        //while (!game.IsOver)
+        //{
+        //sw.Start();
+        // only material eval move
+        Console.WriteLine(game.GetBoardPrintFormat());
+        engine.ClearPreviousEvals();
+        engine.SetFenPosition(game.GetBoardFEN());
+        var bestMoveMinimax = engine.BestMove(
+            maxDepth: 3,
+            useAlphaBetaPruning: true,
+            evaluationType: OctoChessEngine.Enums.EvaluationType.MATERIAL,
+            useIterativeDeepening: true,
+            timeLimit: 5,
+            useQuiescenceSearch: true,
+            maxQuiescenceDepth: 3
+        );
+        Console.WriteLine("Best move: " + bestMoveMinimax);
+        game.Move(bestMoveMinimax.From, bestMoveMinimax.To, bestMoveMinimax.PromotedTo);
 
-            Console.WriteLine(game.GetBoardPrintFormat());
-            engine.SetFenPosition(game.GetBoardFEN());
-            var bestMove = engine.BestMove(
-                maxDepth: 4,
-                useAlphaBetaPruning: true,
-                evaluationType: OctoChessEngine.Enums.EvaluationType.TRAINED_MODEL,
-                useIterativeDeepening: true,
-                timeLimit: 30,
-                useQuiescenceSearch: false,
-                maxQuiescenceDepth: 3
-            );
-            Console.WriteLine("Best move: " + bestMove);
-            game.Move(bestMove.From, bestMove.To, bestMove.PromotedTo);
+        //sw.Stop();
+        //Console.WriteLine($"Elapsed time: {sw.ElapsedMilliseconds}");
 
-            sw.Stop();
-            Console.WriteLine($"Elapsed time: {sw.ElapsedMilliseconds}");
+        //if (game.IsOver)
+        //    break;
+        // nn eval move
+        engine.ClearPreviousEvals();
+        engine.SetFenPosition(game.GetBoardFEN());
+        var bestMoveNn = engine.BestMove(
+            maxDepth: 2,
+            useAlphaBetaPruning: true,
+            evaluationType: OctoChessEngine.Enums.EvaluationType.MATERIAL,
+            useIterativeDeepening: false,
+            timeLimit: 30,
+            useQuiescenceSearch: true,
+            maxQuiescenceDepth: 3
+        );
+        Console.WriteLine("Best move: " + bestMoveNn);
+        game.Move(bestMoveNn.From, bestMoveNn.To, bestMoveNn.PromotedTo);
 
-            Console.Write("Write move: ");
-            string move = Console.ReadLine();
-            game.Move(move);
-        }
+        //Console.Write("Write move: ");
+        //string move = Console.ReadLine();
+        //game.Move(move);
+        //}
     }
 }
