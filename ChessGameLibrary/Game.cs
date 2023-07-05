@@ -233,6 +233,8 @@ namespace ChessGameLibrary
                 Board.GetSquare(rookMove.From).Piece = Board.GetSquare(rookMove.To).Piece;
                 Board.GetSquare(rookMove.To).Piece = null;
             }
+            if (PlayerToMove == PieceColor.WHITE)
+                MovesCount--;
             PlayerToMove = PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
             EnPassantSquare = moveToUndo.PrevEnPassantSquare;
             WhiteCanCastleKing = moveToUndo.PrevWhiteCanCastleKing;
@@ -240,7 +242,6 @@ namespace ChessGameLibrary
             BlackCanCastleKing = moveToUndo.PrevBlackCanCastleKing;
             BlackCanCastleQueen = moveToUndo.PrevBlackCanCastleQueen;
             HalfmoveClock = moveToUndo.PrevHalfmoveClock;
-            MovesCount--;
             UpdateThreatMap();
         }
 
@@ -337,13 +338,14 @@ namespace ChessGameLibrary
                 moveInfo.PromotedTo = promotedTo;
                 toSq.Piece.Type = promotedTo;
             }
+            if (PlayerToMove == PieceColor.BLACK)
+                MovesCount++;
             PlayerToMove = PlayerToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
             MovesHistory.Add(moveInfo);
             if (piece.Type == PieceType.PAWN || moveInfo.CapturedPiece != null)
                 HalfmoveClock = 0;
             else
                 HalfmoveClock++;
-            MovesCount++;
             UpdateThreatMap();
             if (fiftyMovesRule && HalfmoveClock == Utils.HALFMOVE_CLOCK_LIMIT)
             {

@@ -37,7 +37,7 @@ A simple pseudocode for Alpha-beta pruning is shown in fig. \ref{fig:alphabetaPs
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.9]{figures/alphabeta-pseudocode.png}
-  \captionof{figure}{Alpha-beta pruning pseudocode}
+  \captionof{figure}{Alpha-beta pruning pseudocode \cite{alpha-beta-pruning}}
   \label{fig:alphabetaPseudocode}
 \end{figure}
 
@@ -70,7 +70,7 @@ In fig. \ref{fig:quiescencePosition} is shown an example of a simple position wh
 \subsection{Iterative deepening}
 \label{subsec:ch4sec2subsec3}
 
-The iterative deepening starts computing the evaluations for the minimax at depth 1, and then increments the depth up to the given maximum depth. After the time given as an input elapses, the search is stopped and the move with the best evaluation found on the previous depth search is returned. I set the maximum time to 50 seconds, but this can be easily changed from a parameter, depending on the length of the match and accuracy of moves the user of the engine desires.
+The iterative deepening starts computing the evaluations for the minimax at depth 1, and then increments the depth up to the given maximum depth. After the time given as an input elapses, the search is stopped and the move with the best evaluation found on the previous depth search is returned. I set the maximum time to 10 seconds, but this can be easily changed from a parameter, depending on the length of the match and accuracy of moves the user of the engine desires.
 
 \section{Evaluation}
 \label{sec:ch4sec3}
@@ -130,6 +130,8 @@ The dataset consists of chess matches played at grandmaster level downloaded in 
 A PGN (portable game notation) file contains multiple chess matches. Each match has several headers (name of player with white pieces, name of player with black pieces, event it was played at, date it was played on, result, elo of players etc.), an empty line, and then the "movetext section". The matches in a PGN file are separated by two empty lines. Following is a sample PGN match:
 \begin{figure}[h]
     \includegraphics[width=0.8\textwidth]{figures/carlsen-anand-match.png}
+    \caption{Carlsen - Anand, 2014.11.09}
+    \label{fig:carlsenAnandPGN}
 \end{figure}
 
 The movetext section contains the chess moves, move numbers, optional annotations and a concluding game termination marker (the result of the match). The result can be "1-0" (white won), "0-1" (black won) or "1/2-1/2" (draw). The moves are written in SAN (standard algebraic notation). SAN identifies each square on the board as a combination of file (a-h) and rank (1-8) (see fig. \ref{fig:boardSquares}).
@@ -150,7 +152,13 @@ Each piece can be identified by a letter (K - king, Q - queen, R - rook, B - bis
     \item If the move checks the opponent's king, a plus sign ('+') is added at the end of the move (ex: Qe7+); if the move checkmates the opponent's king, the octothorpe sign ('\#') is added instead (ex: Qe7\#)
 \end{itemize}
 
-I computed the positions that occured in the matches in the dataset, and the value I assigned to each position is the mean of the results of the matches in which the position appeared. For example: if a certain position appeared in 10 matches, and 4 of the matches ended in a win for white, 2 in a win for black, and the other 4 were draws, the value assigned to the position is: \[\frac{(4*1)+(2*-1)+(4*0)}{10}=0.2\] (a win for white is assigned 1, a win for black is assigned -1, and a draw is 0).
+I computed the positions that occured in the matches in the dataset, and the value I assigned to each position is the mean of the results of the matches in which the position appeared. For example: if a certain position appeared in 10 matches, and 4 of the matches ended in a win for white, 2 in a win for black, and the other 4 were draws, the value assigned to the position is:
+
+\begin{equation}    
+    \frac{(4*1)+(2*-1)+(4*0)}{10}=0.2
+\end{equation}
+
+(a win for white is assigned 1, a win for black is assigned -1, and a draw is 0).
 
 % Number of positions: 8493798, number of distinct positions: 5586478
 

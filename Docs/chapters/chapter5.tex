@@ -23,7 +23,7 @@ Another option is Python, which offers greater ease of use, but is generally slo
 
 The neural network was trained using Keras, an open-source deep learning framework written in Python. Keras provides a simple and intuitive API that allows users to quickly prototype and build deep learning models. It can run on top of different deep learning libraries, such as TensorFlow, Theano, or Microsoft Cognitive Toolkit (CNKT).
 
-Keras is built with a modular architecture, allowing users to create neural networks by stacking layers. It includes a variety of pre-defined layers such as Dense (fully connected), Convolutional, Recurrent, which can be easily combined to construct complex architectures. In fig. \ref{fig:kerasModel} is shown an example of building a neural network with an input layer of 70 nodes, a hidden layer with 32 nodes, and an output layer with one node.
+Keras is built with a modular architecture, allowing users to create neural networks by stacking layers. It includes a variety of pre-defined layers such as Dense (fully connected), Convolutional, Recurrent, which can be easily combined to construct complex architectures. Figure \ref{fig:kerasModel} shows an example of building a neural network with an input layer of 70 nodes, a hidden layer containing 32 nodes, and an output layer containing a single node.
 
 \begin{figure}[h]
     \centering
@@ -72,7 +72,7 @@ The implementation of the chess logic was done using several classes and enumera
 \subsubsection{SquareCoords}
 \label{subsubsec:ch5sec1subsec2subsubsec1}
 
-The $SquareCoords$ class encapsulates the coordinates of a square: it contains the number of the file and the number of the rank. It has a simple constructor with the two fields as parameters, and also a constructor that receives a string parameter, checks if it is a valid square string (has two characters, first one denoting the file - a letter from $a$ to $h$, and the second one denoting the rank - a number from $1$ to $8$), and assigns the corresponding file and rank.
+The $SquareCoords$ class encapsulates the coordinates of a square: it contains both the file number and the rank number. It has a simple constructor with the two fields as parameters, and also a constructor that receives a string parameter, checks if it is a valid square string (has two characters, first one denoting the file - a letter from $a$ to $h$, and the second one denoting the rank - a number from $1$ to $8$), and assigns the corresponding file and rank.
 
 \subsubsection{Piece}
 \label{subsubsec:ch5sec1subsec2subsubsec2}
@@ -114,8 +114,8 @@ The $Game$ class is the largest and it contains most of the functionality needed
 \begin{itemize}
     \item A $PieceColor$ field denoting the player to move
     \item A $SquareCoords$ field which contains the "en-passant square", if the last move pushed a pawn two squares (the en-passant square being the square where a pawn can capture by making an en-passant move)
-    \item A $GameState$ enum denoting the current state of the game
-    \item An integer denoting the number of moves since the game started
+    \item A $GameState$ enum denoting the game's ongoing state
+    \item An integer representing the number of moves since the game started
     \item An integer denoting the number of consecutive half-moves without captures or pawn moves
     \item Four boolean values denoting the castling rights
     \item A list of $MoveInfo$ objects containing the moves played in the game
@@ -125,14 +125,14 @@ The $Game$ class is the largest and it contains most of the functionality needed
 
 The $Game$ class has a method for setting the position from a FEN string, which contains all the necessary information for identifying a position. It is a single line of characters, made up of six fields, separated by a space.
 
-The first field contains the piece placement, rank by rank, separated by a '/' (slash) symbol. Each piece is represented by a single character, with uppercase letters for white pieces (K for king, Q for queen, R for rook, B for bishop, N for knight, and P for pawn), and lowercase letters for black pieces. A decimal digit counts consecutive empty squares on a rank. The second field specifies the player to move ('w' for white, 'b' for black). The third field indicates the castling rights - 'K' for white kingside castling, 'Q' for white queenside castling, 'k' for black kingside castling, and 'q' for black queenside castling. If no castling is possible for any side, a hyphen (-) is used. If there is a potential en passant capture available, the fourth field specifies the target square. If there is no en passant target square, a hyphen (-) is used. Otherwise, the target square is represented using algebraic notation (e.g., 'e3'). The fifth field represents the halfmove clock. The sixth and last field indicates the current move number. It starts at 1 and is incremented after each black move.
+The first field contains the piece placement, rank by rank, separated by a '/' (slash) symbol. Each piece is represented by a single character, with uppercase letters for white pieces, and lowercase letters for black pieces. A decimal digit counts consecutive empty squares on a rank. The second field specifies the player to move ('w' for white, 'b' for black). The third field indicates the castling rights - 'K' for white kingside castling, 'Q' for white queenside castling, 'k' for black kingside castling, and 'q' for black queenside castling. If no castling is possible for any side, a hyphen (-) is used. If there is a potential en passant capture available, the fourth field specifies the target square. In cases where there is no en passant target square, a hyphen (-) is used. Otherwise, the target square is represented using algebraic notation (e.g., 'e3'). The fifth field represents the halfmove clock. The sixth and last field indicates the current move number. It starts at 1 and is incremented after each black move.
 
 Following is the FEN string representation of the starting position for a standard chess game:
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=1\textwidth]{figures/starting-position-fen.png}
-    \caption{FEN string for starting position}
+    \caption{FEN string for the starting position}
     \label{fig:fenStartingPosition}
 \end{figure}
 
@@ -153,4 +153,40 @@ In fig. \ref{fig:depDiagram} the dependency diagram between the classes is shown
 
 I created the chess interface in Unity, a game development engine that provides a visual editor and C\# scripting capabilities. I chose Unity because of its user-friendly and intuitive interface, as well as its ability to easily integrate external C\# libraries, such as the chess engine I built.
 
-On the game interface I added inputs that allow the player to change the engine parameters: the minimax depth, the usage of iterative deepening and quiescence search, and also the time limit for the iterative deepening and the maximum depth for the quiescence search.
+The user has the ability to select the color of the pieces he wants to play with, and also choose if he wants to control both sides or play against the engine.
+
+On the game interface I added inputs that allow the player to change the engine parameters: the minimax depth, the usage of iterative deepening and quiescence search, and also the time limit for the iterative deepening and the maximum depth for the quiescence search (fig. \ref{fig:engineOptions}).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{figures/chess-game-engine-options.png}
+    \caption{Engine options}
+    \label{fig:engineOptions}
+\end{figure}
+
+The interface also contains a text box, where the user can see the current FEN and set the position from a FEN string, for the ability to quickly play against the engine from a desired position (fig. \ref{fig:fenField}).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{figures/chess-game-fen-field.png}
+    \caption{FEN field}
+    \label{fig:fenField}
+\end{figure}
+
+For visibility while playing the game, when clicking a piece that has valid moves, the square of the selected piece is marked in green and the destination squares of the valid moves are highlighted in blue. Furthermore, the source square and destination square of the last played move are both marked in yellow (ex: in fig. \ref{fig:highlightedSquares}, d7 is the selected square, d6 and d5 are the destination squares of the valid moves, e2 and e3 are the source and destination squares of the previous move played).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/chess-game-squares.png}
+    \caption{Highlighted squares}
+    \label{fig:highlightedSquares}
+\end{figure}
+
+An additional aspect requiring consideration is providing the player with the ability to select the promotion piece upon advancing a pawn to the final rank. This has been done by displaying a box with the four valid promotion pieces (queen, rook, bishop, knight) when a player moves a pawn to the last rank (fig. \ref{fig:promotion}).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/chess-game-promotion.png}
+    \caption{Pawn promotion}
+    \label{fig:promotion}
+\end{figure}

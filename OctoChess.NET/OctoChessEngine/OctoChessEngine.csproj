@@ -11,6 +11,7 @@
 
   <ItemGroup>
 	<ProjectReference Include="..\..\ChessGameLibrary\ChessGameLibrary.csproj" />
+	<ProjectReference Include="..\MachineLearning\MachineLearning.csproj" />
   </ItemGroup>
 
 </Project>

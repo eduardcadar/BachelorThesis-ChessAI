@@ -1,17 +1,26 @@
+using ChessGameLibrary;
 using OctoChessEngine.Enums;
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using static Assets.Scripts.EngineUtils;
 
 public class ButtonBehaviour : MonoBehaviour
 {
     public Chessboard Chessboard;
 
+    private void GetChessboard()
+    {
+        Chessboard = transform.GetComponentInChildren<Chessboard>();
+    }
+
     public void SetEngineOptions()
     {
-        Chessboard chessboard = GetComponentInChildren<Chessboard>();
+        if (Chessboard == null)
+            GetChessboard();
 
-        TMP_InputField depthField = chessboard.DepthInput.GetComponentInChildren<TMP_InputField>();
+        TMP_InputField depthField = Chessboard.DepthInput.GetComponentInChildren<TMP_InputField>();
         string depthString = depthField.text.Trim();
         if (depthString.Length > 0)
         {
@@ -26,82 +35,134 @@ public class ButtonBehaviour : MonoBehaviour
 
         EvalType = EvaluationType.MATERIAL;
 
-        UseAlphaBetaPruning = true;
-
-        TMP_InputField timeLimitField =
-            chessboard.TimeLimitInput.GetComponentInChildren<TMP_InputField>();
-        string timeLimitString = timeLimitField.text.Trim();
-        if (timeLimitString.Length > 0)
+        if (GetIterativeDeepeningToggle(Chessboard).isOn)
         {
-            int timeLimit = int.Parse(timeLimitString);
-            if (timeLimit >= 5)
+            UseIterativeDeepening = true;
+            TMP_InputField timeLimitField =
+                Chessboard.TimeLimitInput.GetComponentInChildren<TMP_InputField>();
+            string timeLimitString = timeLimitField.text.Trim();
+            if (timeLimitString.Length > 0)
             {
-                UseIterativeDeepening = true;
-                TimeLimit = timeLimit;
+                int timeLimit = int.Parse(timeLimitString);
+                TimeLimit = Math.Max(timeLimit, 3);
             }
             else
                 UseIterativeDeepening = false;
         }
-        else
-            UseIterativeDeepening = false;
 
-        TMP_InputField quiescenceDepthField =
-            chessboard.QuiescenceDepthInput.GetComponentInChildren<TMP_InputField>();
-        string maxQuiescenceDepthString = quiescenceDepthField.text.Trim();
-        if (maxQuiescenceDepthString.Length > 0)
+        if (GetQuiescenceSearchToggle(Chessboard).isOn)
         {
-            int maxQuiescenceDepth = int.Parse(maxQuiescenceDepthString);
-            if (maxQuiescenceDepth > 0)
+            UseQuiescenceSearch = true;
+            TMP_InputField quiescenceDepthField =
+                Chessboard.QuiescenceDepthInput.GetComponentInChildren<TMP_InputField>();
+            string maxQuiescenceDepthString = quiescenceDepthField.text.Trim();
+            if (maxQuiescenceDepthString.Length > 0)
             {
-                UseQuiescenceSearch = true;
-                MaxQuiescenceDepth = maxQuiescenceDepth;
+                int maxQuiescenceDepth = int.Parse(maxQuiescenceDepthString);
+                if (maxQuiescenceDepth > 0)
+                    MaxQuiescenceDepth = maxQuiescenceDepth;
+                else
+                    UseQuiescenceSearch = false;
             }
             else
                 UseQuiescenceSearch = false;
         }
-        else
-            UseQuiescenceSearch = false;
+    }
+
+    public void SetPositionFromInputFen()
+    {
+        if (Chessboard == null)
+            GetChessboard();
+        InputField fenField = Chessboard.FenInputField.GetComponent<InputField>();
+        bool valid = Chessboard.InitializeBoardFromFen(fenField.text);
+        if (!valid)
+            fenField.text = "Invalid fen!";
+    }
+
+    private Toggle GetIterativeDeepeningToggle(Chessboard chessboard)
+    {
+        return chessboard.UseIterativeDeepening.GetComponent<Toggle>();
+    }
+
+    private Toggle GetQuiescenceSearchToggle(Chessboard chessboard)
+    {
+        return chessboard.UseQuiescenceSearch.GetComponent<Toggle>();
+    }
+
+    public void ToggleIterativeDeepening()
+    {
+        if (Chessboard == null)
+            GetChessboard();
+        Toggle iterativeDeepeningToggle = GetIterativeDeepeningToggle(Chessboard);
+        TMP_InputField timeLimitInput =
+            Chessboard.TimeLimitInput.GetComponentInChildren<TMP_InputField>();
+        timeLimitInput.interactable = iterativeDeepeningToggle.isOn;
+        UseIterativeDeepening = iterativeDeepeningToggle.isOn;
+    }
+
+    public void ToggleQuiescenceSearch()
+    {
+        if (Chessboard == null)
+            GetChessboard();
+        Toggle quiescenceSearchToggle = GetQuiescenceSearchToggle(Chessboard);
+        TMP_InputField quiescenceDepthInput =
+            Chessboard.QuiescenceDepthInput.GetComponentInChildren<TMP_InputField>();
+        quiescenceDepthInput.interactable = quiescenceSearchToggle.isOn;
+        UseQuiescenceSearch = quiescenceSearchToggle.isOn;
     }
 
     public void ToggleWhiteThreatMap()
     {
-        Chessboard chessboard = GetComponentInChildren<Chessboard>();
-        chessboard.ShowBlackThreatMap = false;
-        chessboard.ShowWhiteThreatMap = !chessboard.ShowWhiteThreatMap;
-        chessboard.RefreshThreatMap();
+        if (Chessboard == null)
+            GetChessboard();
+        Chessboard.ShowBlackThreatMap = false;
+        Chessboard.ShowWhiteThreatMap = !Chessboard.ShowWhiteThreatMap;
+        Chessboard.RefreshThreatMap();
     }
 
     public void ToggleBlackThreatMap()
     {
-        Chessboard chessboard = GetComponentInChildren<Chessboard>();
-        chessboard.ShowWhiteThreatMap = false;
-        chessboard.ShowBlackThreatMap = !chessboard.ShowBlackThreatMap;
-        chessboard.RefreshThreatMap();
+        if (Chessboard == null)
+            GetChessboard();
+        Chessboard.ShowWhiteThreatMap = false;
+        Chessboard.ShowBlackThreatMap = !Chessboard.ShowBlackThreatMap;
+        Chessboard.RefreshThreatMap();
     }
 
     public void RestartGame()
     {
-        Chessboard chessboard = GetComponentInChildren<Chessboard>();
-        chessboard.InitializeBoard();
+        if (Chessboard == null)
+            GetChessboard();
+        Chessboard.InitializeBoardFromFen(Utils.STARTING_FEN);
+        Chessboard.UpdateFenInputField();
     }
 
-    private void InitializeChessboard()
-    {
-        Chessboard = transform.GetComponentInChildren<Chessboard>();
-    }
-
-    public void PlayerVsPlayer()
+    public void VsPlayer()
     {
         if (Chessboard == null)
-            InitializeChessboard();
-        Chessboard.SetPlayerTypes(PlayerType.HUMAN, PlayerType.HUMAN);
+            GetChessboard();
+        Chessboard.PlaysAgainstEngine = false;
     }
 
-    public void PlayerVsEngine()
+    public void VsEngine()
     {
         if (Chessboard == null)
-            InitializeChessboard();
-        Chessboard.SetPlayerTypes(PlayerType.HUMAN, PlayerType.ENGINE);
+            GetChessboard();
+        Chessboard.PlaysAgainstEngine = true;
+    }
+
+    public void PlayAsWhite()
+    {
+        if (Chessboard == null)
+            GetChessboard();
+        Chessboard.PlaysAsWhite = true;
+    }
+
+    public void PlayAsBlack()
+    {
+        if (Chessboard == null)
+            GetChessboard();
+        Chessboard.PlaysAsWhite = false;
     }
 
     public void ExitGame()

@@ -1,6 +1,7 @@
 using Assets.Scripts;
 using ChessGameLibrary;
 using ChessGameLibrary.Enums;
+using System;
 using System.Collections;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,21 +18,22 @@ public class BoardTile : MonoBehaviour
 
     private void Update()
     {
-        if (Chessboard.Game.State == GameState.INPROGRESS)
+        if (
+            Chessboard.PlaysAgainstEngine
+            && Chessboard.Game.State == GameState.INPROGRESS
+            && _finishedMove
+        )
         {
-            if (_finishedMove)
+            switch (Chessboard.Game.PlayerToMove)
             {
-                switch (Chessboard.Game.PlayerToMove)
-                {
-                    case PieceColor.WHITE:
-                        if (!Chessboard.IsPlayerWhiteHuman)
-                            EngineMove();
-                        break;
-                    case PieceColor.BLACK:
-                        if (!Chessboard.IsPlayerBlackHuman)
-                            EngineMove();
-                        break;
-                }
+                case PieceColor.WHITE:
+                    if (!Chessboard.PlaysAsWhite)
+                        EngineMove();
+                    break;
+                case PieceColor.BLACK:
+                    if (Chessboard.PlaysAsWhite)
+                        EngineMove();
+                    break;
             }
         }
     }
@@ -39,13 +41,25 @@ public class BoardTile : MonoBehaviour
     private void StartedSearching()
     {
         Chessboard.EngineIsSearchingText.SetActive(true);
+        Chessboard.ButtonSetEngineOptions.GetComponent<Button>().interactable = false;
         Chessboard.ButtonRestartGame.GetComponent<Button>().interactable = false;
+        Chessboard.ButtonSetFen.GetComponent<Button>().interactable = false;
+        Chessboard.ButtonPlayAsWhite.GetComponent<Button>().interactable = false;
+        Chessboard.ButtonPlayAsBlack.GetComponent<Button>().interactable = false;
+        Chessboard.ButtonVsPlayer.GetComponent<Button>().interactable = false;
+        Chessboard.ButtonVsEngine.GetComponent<Button>().interactable = false;
     }
 
     private void FinishedSearching()
     {
         Chessboard.EngineIsSearchingText.SetActive(false);
+        Chessboard.ButtonSetEngineOptions.GetComponent<Button>().interactable = true;
         Chessboard.ButtonRestartGame.GetComponent<Button>().interactable = true;
+        Chessboard.ButtonSetFen.GetComponent<Button>().interactable = true;
+        Chessboard.ButtonPlayAsWhite.GetComponent<Button>().interactable = true;
+        Chessboard.ButtonPlayAsBlack.GetComponent<Button>().interactable = true;
+        Chessboard.ButtonVsPlayer.GetComponent<Button>().interactable = true;
+        Chessboard.ButtonVsEngine.GetComponent<Button>().interactable = true;
     }
 
     private void HumanMove()
@@ -72,6 +86,7 @@ public class BoardTile : MonoBehaviour
             if (_finishedMove)
             {
                 DestroySelectedAndValidSquares();
+                Chessboard.UpdateFenInputField();
             }
         }
     }
@@ -103,19 +118,31 @@ public class BoardTile : MonoBehaviour
         //return new WaitForSecondsRealtime(Chessboard.TIME_BEFORE_ENGINE_MOVES);
 
         Debug.Log("engine searching for move...");
-        SimpleMove move = await EngineUtils.GetEngineBestMove(fen: Chessboard.Game.GetBoardFEN());
+        try
+        {
+            SimpleMove move = await EngineUtils.GetEngineBestMove(
+                fen: Chessboard.Game.GetBoardFEN()
+            );
 
-        //int i = Random.Range(0, Chessboard.Game.LegalMoves.Count);
-        //SimpleMove move = Chessboard.Game.LegalMoves[i];
-        Debug.Log("ENGINE MOVE: " + move.ToString());
-        MoveInfo moveInfo = Chessboard.Game.Move(move.From, move.To, promotedTo: move.PromotedTo);
-        MoveOnBoard(moveInfo);
+            Debug.Log("ENGINE MOVE: " + move.ToString());
+            MoveInfo moveInfo = Chessboard.Game.Move(
+                move.From,
+                move.To,
+                promotedTo: move.PromotedTo
+            );
+            MoveOnBoard(moveInfo);
 
-        if (Chessboard.Game.State != GameState.INPROGRESS)
-            Debug.Log(Chessboard.Game.State);
-        _finishedMove = true;
-        FinishedSearching();
-        UpdateLastMoveSquares(move.From, move.To);
+            if (Chessboard.Game.State != GameState.INPROGRESS)
+                Debug.Log(Chessboard.Game.State);
+            _finishedMove = true;
+            FinishedSearching();
+            UpdateLastMoveSquares(move.From, move.To);
+            Chessboard.UpdateFenInputField();
+        }
+        catch (Exception ex)
+        {
+            Debug.Log(ex.Message);
+        }
     }
 
     private void MoveOnBoard(MoveInfo move)
@@ -171,11 +198,11 @@ public class BoardTile : MonoBehaviour
         switch (Chessboard.Game.PlayerToMove)
         {
             case PieceColor.WHITE:
-                if (Chessboard.IsPlayerWhiteHuman)
+                if (!Chessboard.PlaysAgainstEngine || Chessboard.PlaysAsWhite)
                     HumanMove();
                 break;
             case PieceColor.BLACK:
-                if (Chessboard.IsPlayerBlackHuman)
+                if (!Chessboard.PlaysAgainstEngine || !Chessboard.PlaysAsWhite)
                     HumanMove();
                 break;
         }

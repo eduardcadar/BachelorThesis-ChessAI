@@ -1,4 +1,4 @@
-\chapter{Techniques and algorithms used}
+\chapter{Techniques and algorithms}
 \label{chap:ch2}
 
 In his 1950 paper, "Programming a Computer for Playing Chess" \cite{shannon1950xxii}, Claude E. Shannon describes how a chess engine might be implemented. Although not clearly stated, from his work we can deduce the three main parts a machine would need to do to be able to play chess, which are still valid and used in modern engines:
@@ -47,18 +47,18 @@ To address this issue, techniques like alpha-beta pruning, transposition tables,
 
 Alpha-beta pruning is an optimization technique used in the minimax algorithm that can reduce the number of nodes that need to be evaluated in the game tree, making the search more efficient. Minimax searches through all leaf nodes to find the minimax value, while alpha-beta prunes leaves that have no influence on the outcome.
 
-The algorithm works by maintaining two values: alpha and beta. Alpha represents the best score that the maximizing player has found so far, while beta represents the best score that the minimizing player has found so far.
+The algorithm works by maintaining two values: alpha and beta. Alpha represents the best score found for the maximizing player so far, while beta represents the best score found for the minimizing player.
 
 As the algorithm searches through the game tree, it compares the scores of each possible move to alpha and beta. If a score is found that is worse than alpha (for the maximizing player) or better than beta (for the minimizing player), then that branch of the game tree can be pruned, since it will not lead to a better outcome \cite{carolus2006alpha}.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.4\textwidth]{figures/alpha-beta-pruning.png}
-    \caption{Alpha-beta pruning}
+    \includegraphics[width=0.6\textwidth]{figures/alpha-beta-pruning.png}
+    \caption{Alpha-beta pruning \cite{alpha-beta-pruning}}
     \label{fig:alphaBetaPruning}
 \end{figure}
 
-The time complexity of alpha-beta pruning in chess is also dependent on the depth of the search tree and the branching factor of the game. In the worst case scenario, where alpha-beta pruning has no effect, the time complexity of alpha-beta pruning is still $O(b^{d})$, the same as for the minimax algorithm. But alpha-beta pruning, in the best case, has a time complexity of $O(b^{\frac{d}{2}})$, which is significantly less than that of the classic minimax algorithm.
+The time complexity of alpha-beta pruning in chess is also dependent on the depth of the search tree and the branching factor of the game. In the worst case scenario, where alpha-beta pruning has no effect, the time complexity is still $O(b^{d})$, the same as for the minimax algorithm. But alpha-beta pruning's time complexity, in the best case, is $O(b^{\frac{d}{2}})$, which is significantly less than that of the classic minimax algorithm.
 
 The effectiveness of alpha-beta pruning depends on the ordering of the moves in the search tree. If the moves are ordered in such a way that the best moves are considered first, then alpha-beta pruning can quickly identify the best move and avoid searching deeper than necessary.
 
@@ -101,12 +101,12 @@ As mentioned earlier, if unlimited computing power was available, any position c
 \subsection{Centipawns}
 \label{subsec:ch2sec3subsec1}
 
-The main part of an evaluation function is the material advantage, that is, the number and types of pieces on each side. Pieces are usually assigned a base value, as can be seen in fig. \ref{fig:basicPieceValues}. The king is either assigned no value, because the objective of chess is to checkmate the opponent's king, not capture it, therefore its value is considered irrelevant, or is assigned a very high value (bigger than all the other pieces combined), so the engine prioritizes the safety of the king above all else. In this case, the engine would attempt to avoid any moves that might put its own king in danger, even if it means giving up material or positional advantage.
+The main part of an evaluation function is the material advantage, that is, the number and types of pieces on each side. Pieces are usually assigned a base value, as can be seen in fig. \ref{fig:basicPieceValues}. The king is either assigned no value, because the objective of chess is not to capture the opponent's king, but to checkmate it, therefore its value is considered irrelevant, or is assigned a very high value (bigger than all the other pieces combined), so the engine prioritizes the safety of the king above all else. In this case, the engine would attempt to avoid any moves that might put its own king in danger, even if it means giving up material or positional advantage.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.4\textwidth]{figures/piece-basic-values.png}
-    \caption{Basic piece values}
+    \caption{Basic piece values \cite{chess-piece-values}}
     \label{fig:basicPieceValues}
 \end{figure}
 
@@ -132,9 +132,9 @@ Most of the times, handcrafted evaluation functions also take into consideration
 \subsection{Neural network}
 \label{subsec:ch2sec3subsec3}
 
-Another way of building an evaluation function is through training a neural network. Neural networks are a class of machine learning models inspired by the structure and functioning of the human brain. They are designed to learn and make predictions or decisions based on input data. Neural networks excel at tasks involving pattern recognition, classification, regression, and other complex data analysis tasks.
+Another way of building an evaluation function is through training a neural network. Neural networks are a type of machine learning models inspired by the anatomical and functional characteristics of the human brain. They are designed to learn and make predictions or decisions based on input data. Neural networks excel at tasks involving pattern recognition, classification, regression, and other complex data analysis tasks.
 
-Neural networks are composed of interconnected nodes called neurons. They are organized into layers: an input layer, one or more hidden layers, and an output layer. Each neuron receives some values as input, applies a mathematical operation, and produces an output that is passed on to the next layer.
+Neural networks are composed of interconnected units known as neurons, which are arranged in hierarchical layers including an input layer, one or more hidden layers, and an output layer. Within this architecture, each neuron receives some values as input, applies a mathematical operation, and generates an output that propagates to subsequent layers.
 
 One approach to training the neural network for evaluating chess positions is to use supervised learning, by giving it the position, sometimes along hand-crafted features as input (the ones previously mentioned: material, mobility etc.), and the corresponding evaluations, such as the scores given by human experts or strong chess engines.
 

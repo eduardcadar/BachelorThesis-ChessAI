@@ -1,12 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "HxTbIK7pfDXvmoxlqQed6V4KWQYJecesKz4E6IYs5YoX5yYdRjiz/vVVcseYjhIJ8aD1Ge4yzG44p+kVgqN4jQ==",
+  "dgSpecHash": "/eadUI6l3/u4cEliIY42Gk7RgOhqEtdPchPkAFDlDNjzW3WIJp0w1qctnZ3KP19Fu/VljVEXIZ0xxBxrEVCehw==",
   "success": true,
   "projectFilePath": "C:\\facultate\\BachelorThesis-ChessAI\\OctoChess.NET\\OctoChessAPI\\OctoChessAPI.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\edyed\\.nuget\\packages\\keras.net\\3.8.5\\keras.net.3.8.5.nupkg.sha512",
     "C:\\Users\\edyed\\.nuget\\packages\\microsoft.aspnetcore.openapi\\7.0.5\\microsoft.aspnetcore.openapi.7.0.5.nupkg.sha512",
+    "C:\\Users\\edyed\\.nuget\\packages\\microsoft.csharp\\4.5.0\\microsoft.csharp.4.5.0.nupkg.sha512",
     "C:\\Users\\edyed\\.nuget\\packages\\microsoft.extensions.apidescription.server\\6.0.5\\microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
     "C:\\Users\\edyed\\.nuget\\packages\\microsoft.openapi\\1.4.3\\microsoft.openapi.1.4.3.nupkg.sha512",
+    "C:\\Users\\edyed\\.nuget\\packages\\numpy.bare\\3.8.1.25\\numpy.bare.3.8.1.25.nupkg.sha512",
+    "C:\\Users\\edyed\\.nuget\\packages\\pythonnet_netstandard_py38_win\\2.5.1\\pythonnet_netstandard_py38_win.2.5.1.nupkg.sha512",
     "C:\\Users\\edyed\\.nuget\\packages\\swashbuckle.aspnetcore\\6.5.0\\swashbuckle.aspnetcore.6.5.0.nupkg.sha512",
     "C:\\Users\\edyed\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.5.0\\swashbuckle.aspnetcore.swagger.6.5.0.nupkg.sha512",
     "C:\\Users\\edyed\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.5.0\\swashbuckle.aspnetcore.swaggergen.6.5.0.nupkg.sha512",

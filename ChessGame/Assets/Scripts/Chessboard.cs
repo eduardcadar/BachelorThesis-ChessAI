@@ -1,9 +1,10 @@
 using ChessGameLibrary;
 using ChessGameLibrary.Enums;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using static Assets.Scripts.EngineUtils;
+using UnityEngine.UI;
 
 public class Chessboard : MonoBehaviour
 {
@@ -58,14 +59,24 @@ public class Chessboard : MonoBehaviour
     public GameObject PlayerToMoveText;
     public GameObject GameStateText;
     public GameObject DepthInput;
+    public GameObject UseIterativeDeepening;
     public GameObject TimeLimitInput;
+    public GameObject UseQuiescenceSearch;
     public GameObject QuiescenceDepthInput;
     public GameObject ButtonRestartGame;
     public GameObject EngineIsSearchingText;
+    public GameObject FenInputField;
+    public GameObject ButtonSetFen;
+    public GameObject ButtonSetEngineOptions;
+    public GameObject ButtonPlayAsWhite;
+    public GameObject ButtonPlayAsBlack;
+    public GameObject ButtonVsPlayer;
+    public GameObject ButtonVsEngine;
 
     public Game Game;
-    public bool IsPlayerWhiteHuman { get; set; } = true;
-    public bool IsPlayerBlackHuman { get; set; } = true;
+    public bool PlaysAsWhite { get; set; } = true;
+    public bool PlaysAgainstEngine { get; set; } = false;
+
     public GameObject SelectedSquare { get; set; } = null;
     public GameObject LastMoveFromSquare { get; set; } = null;
     public GameObject LastMoveToSquare { get; set; } = null;
@@ -73,12 +84,6 @@ public class Chessboard : MonoBehaviour
     public List<GameObject> ThreatMap = new();
     public bool ShowWhiteThreatMap = false;
     public bool ShowBlackThreatMap = false;
-
-    public void SetPlayerTypes(PlayerType white, PlayerType black)
-    {
-        IsPlayerWhiteHuman = (white == PlayerType.HUMAN);
-        IsPlayerBlackHuman = (black == PlayerType.HUMAN);
-    }
 
     // LOGIC
     private const int TILE_COUNT_X = 8;
@@ -93,7 +98,8 @@ public class Chessboard : MonoBehaviour
         EngineIsSearchingText.SetActive(false);
         selectedMaterial.color = Color.red;
         GenerateAllTiles(TILE_COUNT_X, TILE_COUNT_Y);
-        InitializeBoard();
+        InitializeBoardFromFen(Utils.STARTING_FEN);
+        UpdateFenInputField();
     }
 
     public void UpdatePlayerToMoveText() =>
@@ -103,6 +109,12 @@ public class Chessboard : MonoBehaviour
     public void UpdateGameStateText() =>
         GameStateText.GetComponent<TextMeshProUGUI>().text = "Game state: " + Game.State.ToString();
 
+    public void UpdateFenInputField()
+    {
+        InputField fen = FenInputField.GetComponent<InputField>();
+        fen.text = Game.GetBoardFEN();
+    }
+
     private void ClearLastMoveSquares()
     {
         if (LastMoveFromSquare != null)
@@ -111,21 +123,28 @@ public class Chessboard : MonoBehaviour
             Destroy(LastMoveToSquare);
     }
 
-    public void InitializeBoard()
+    public bool InitializeBoardFromFen(string fen)
     {
+        Game game = new Game();
+        try
+        {
+            bool valid = game.SetPositionFromFEN(fen);
+            if (!valid)
+                return false;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+        Game = game;
         ClearBoardOfPieces();
         ClearLastMoveSquares();
-        string FEN = Utils.STARTING_FEN;
-        Game = new();
-        //Game.SetPlayerTypes(PlayerType.HUMAN, PlayerType.STOCKFISH);
-        Game.SetPositionFromFEN(FEN);
         UpdatePlayerToMoveText();
         UpdateGameStateText();
-        int ok = GeneratePiecesFromFEN(FEN);
+        int ok = GeneratePiecesFromFEN(fen);
         if (ok < 0)
-        {
-            //error
-        }
+            return false;
+        return true;
     }
 
     public void RemoveThreatMap()
@@ -294,7 +313,6 @@ public class Chessboard : MonoBehaviour
         if (pieceGameObject)
         {
             Piece piece = pieceGameObject.AddComponent<Piece>();
-            //pieceGameObject.AddComponent<SpriteRenderer>().sortingLayerName = "Pieces";
             piece.Initialize(pieceGameObject, pieceType, color);
             pieceGameObject.transform.parent = tileObject.transform;
         }

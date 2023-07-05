@@ -1,11 +1,14 @@
 ﻿using ChessGameLibrary;
 using ChessGameLibrary.Enums;
+using MachineLearning;
+using MachineLearning.ManageData;
 using OctoChessEngine.Domain;
 using OctoChessEngine.Enums;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace OctoChessEngine
 {
@@ -13,7 +16,7 @@ namespace OctoChessEngine
     {
         private readonly Game _game;
 
-        //private MachineLearningModel _model;
+        private MachineLearningModel _model;
         private readonly Dictionary<string, double> _previousEvals;
         private int _prunesCount = 0;
         private Stopwatch _stopwatch = new Stopwatch();
@@ -25,8 +28,8 @@ namespace OctoChessEngine
         {
             _game = new Game();
             MoveEvals = new List<MoveEval>();
-            //_model = new MachineLearningModel();
-            //_model.LoadModel();
+            _model = new MachineLearningModel();
+            _model.LoadModel();
             _previousEvals = new Dictionary<string, double>();
         }
 
@@ -457,16 +460,16 @@ namespace OctoChessEngine
 
         private double EvaluateByTrainedModel(GamePhase gamePhase)
         {
-            //double materialEval = EvaluatePieces(_game.Board, gamePhase);
-            //float[,] positions = DataUtils.GamePositionToFloatPositions(_game);
-            //StringBuilder sb = new StringBuilder();
-            //for (int i = 0; i < 70; i++)
-            //    sb.Append(positions[0, i].ToString()).Append(',');
-            //string pos = sb.ToString()[..^1];
-            //float modelEval = _model.Predict(positions)[0];
+            double materialEval = EvaluatePieces(_game.Board, gamePhase);
+            float[,] positions = DataUtils.GamePositionToFloatPositions(_game);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 70; i++)
+                sb.Append(positions[0, i].ToString()).Append(',');
+            string pos = sb.ToString()[..^1];
+            float modelEval = _model.Predict(positions)[0];
 
-            //return materialEval + modelEval * 100;
-            return 0;
+            return materialEval + modelEval * 100;
+            //return 0;
         }
 
         private static double EvaluatePieces(Board board, GamePhase gamePhase)

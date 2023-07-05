@@ -7,7 +7,7 @@
 
 Based on the results, the neural network appears to be able to improve the evaluation function slightly, even with a simple network architecture, brief training, and a relatively small dataset, compared to the vast number of positions that can appear in chess.
 
-There are several parts of the engine which could be improved. It is currently very slow, a problem which could be partially solved by implementing a faster move generation algorithm and by representing the chess board as bitboards. Spending less time on generating moves would leave more time for the engine to search to a greater depth, allowing it to provide more accurate evaluations.
+There are several parts of the engine which could be improved. It is currently very slow, a problem which could be partially solved by implementing a faster move generation algorithm and by representing the chess board as bitboards. Allocating less time to move generation enables the engine to dedicate a larger portion of its available time towards deeper search, allowing it to provide more accurate evaluations.
 
 Another way of improving the engine's speed is through more aggressive pruning, based on some heuristics. This would create the risk of overlooking some moves, but it would help the engine focus on more promising variations.
 
